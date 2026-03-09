@@ -3,28 +3,24 @@ import { Zap, Twitter, Linkedin, Github, Youtube } from 'lucide-react';
 
 const footerLinks = {
   Product: [
-    { label: 'Features', href: '#features' },
-    { label: 'Pricing', href: '#pricing' },
-    { label: 'Roadmap', href: '/roadmap' },
-    { label: 'Changelog', href: '/changelog' },
-  ],
-  Resources: [
+    { label: 'Features', href: '/#features' },
+    { label: 'Pricing', href: '/pricing' },
     { label: 'Blog', href: '/blog' },
-    { label: 'Documentation', href: '/docs' },
-    { label: 'API Reference', href: '/docs/api' },
-    { label: 'Status', href: '/status' },
+    { label: 'Book a Demo', href: '/book-demo' },
+  ],
+  Dashboard: [
+    { label: 'Overview', href: '/dashboard' },
+    { label: 'Leads & CRM', href: '/dashboard/leads' },
+    { label: 'Analytics', href: '/dashboard/analytics' },
+    { label: 'Content', href: '/dashboard/content' },
   ],
   Company: [
-    { label: 'About', href: '/about' },
-    { label: 'Careers', href: '/careers' },
-    { label: 'Press', href: '/press' },
-    { label: 'Contact', href: '/contact' },
+    { label: 'Login', href: '/login' },
+    { label: 'Sign Up', href: '/login' },
   ],
   Legal: [
     { label: 'Privacy Policy', href: '/privacy' },
     { label: 'Terms of Service', href: '/terms' },
-    { label: 'Cookie Policy', href: '/cookies' },
-    { label: 'GDPR', href: '/gdpr' },
   ],
 };
 

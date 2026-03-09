@@ -5,9 +5,9 @@ const staticPages = [
   { url: '', priority: 1.0, changeFrequency: 'weekly' as const },
   { url: '/blog', priority: 0.9, changeFrequency: 'daily' as const },
   { url: '/pricing', priority: 0.8, changeFrequency: 'weekly' as const },
-  { url: '/about', priority: 0.7, changeFrequency: 'monthly' as const },
-  { url: '/features', priority: 0.8, changeFrequency: 'weekly' as const },
   { url: '/book-demo', priority: 0.9, changeFrequency: 'weekly' as const },
+  { url: '/privacy', priority: 0.3, changeFrequency: 'monthly' as const },
+  { url: '/terms', priority: 0.3, changeFrequency: 'monthly' as const },
 ];
 
 // In production, fetch blog slugs from Supabase
