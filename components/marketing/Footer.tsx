@@ -1,22 +1,23 @@
 import Link from 'next/link';
-import { Zap, Twitter, Linkedin, Github, Youtube } from 'lucide-react';
+import { Twitter, Linkedin, Youtube, Github } from 'lucide-react';
 
 const footerLinks = {
   Product: [
     { label: 'Features', href: '/#features' },
+    { label: 'How it works', href: '/#how-it-works' },
     { label: 'Pricing', href: '/pricing' },
     { label: 'Blog', href: '/blog' },
-    { label: 'Book a Demo', href: '/book-demo' },
+    { label: 'Status', href: '/status' },
   ],
-  Dashboard: [
-    { label: 'Overview', href: '/dashboard' },
+  Platform: [
+    { label: 'Dashboard', href: '/dashboard' },
     { label: 'Leads & CRM', href: '/dashboard/leads' },
     { label: 'Analytics', href: '/dashboard/analytics' },
     { label: 'Content', href: '/dashboard/content' },
   ],
   Company: [
     { label: 'Login', href: '/login' },
-    { label: 'Sign Up', href: '/login' },
+    { label: 'Sign up free', href: '/login' },
   ],
   Legal: [
     { label: 'Privacy Policy', href: '/privacy' },
@@ -33,22 +34,22 @@ const socials = [
 
 export default function Footer() {
   return (
-    <footer className="border-t border-white/5 bg-navy-950/50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 mb-12">
+    <footer className="relative border-t border-white/[0.04]" style={{ background: '#050505' }}>
+      <div className="max-w-7xl mx-auto px-5 sm:px-8 py-16">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-10 mb-14">
           {/* Brand */}
-          <div className="col-span-2 sm:col-span-3 lg:col-span-2">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center">
-                <Zap className="w-4 h-4 text-white" />
+          <div className="col-span-2">
+            <Link href="/" className="flex items-center gap-2 mb-4 group w-fit">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center relative overflow-hidden">
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #00D4FF, #3B82F6)' }} />
+                <span className="relative text-[#080808] font-black text-sm">A</span>
               </div>
-              <span className="text-xl font-bold text-white">Aryanka</span>
+              <span className="text-[15px] font-semibold text-white">Aryanka</span>
             </Link>
-            <p className="text-sm text-navy-400 leading-relaxed mb-6 max-w-xs">
-              The all-in-one organic growth platform. Generate traffic, capture
-              leads, and close deals — without spending on ads.
+            <p className="text-[13px] text-white/25 leading-relaxed mb-6 max-w-[220px]">
+              The all-in-one organic growth platform. No ads required.
             </p>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {socials.map(({ icon: Icon, href, label }) => (
                 <a
                   key={label}
@@ -56,9 +57,10 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
-                  className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-navy-400 hover:text-white hover:bg-white/10 transition-colors"
+                  className="w-8 h-8 rounded-lg border border-white/[0.06] flex items-center justify-center text-white/25 hover:text-white/60 hover:border-white/[0.12] transition-all duration-200"
+                  style={{ background: 'rgba(255,255,255,0.02)' }}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-3.5 h-3.5" />
                 </a>
               ))}
             </div>
@@ -67,15 +69,15 @@ export default function Footer() {
           {/* Links */}
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category}>
-              <h3 className="text-xs font-semibold text-white uppercase tracking-wider mb-4">
+              <h3 className="text-[11px] font-semibold text-white/30 uppercase tracking-widest mb-4">
                 {category}
               </h3>
-              <ul className="space-y-3">
+              <ul className="space-y-2.5">
                 {links.map((link) => (
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-sm text-navy-400 hover:text-white transition-colors"
+                      className="text-[13px] text-white/30 hover:text-white/70 transition-colors duration-200"
                     >
                       {link.label}
                     </Link>
@@ -87,12 +89,12 @@ export default function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-navy-500">
+        <div className="pt-6 border-t border-white/[0.04] flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-[12px] text-white/20">
             © {new Date().getFullYear()} Aryanka. All rights reserved.
           </p>
-          <p className="text-sm text-navy-500">
-            Built with love in India 🇮🇳 — Growing businesses globally
+          <p className="text-[12px] text-white/15">
+            Built in India 🇮🇳 — Growing businesses globally
           </p>
         </div>
       </div>

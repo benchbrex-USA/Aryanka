@@ -1,41 +1,32 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Plus } from 'lucide-react';
 
 const faqs = [
   {
     q: 'How does Aryanka drive traffic without paid ads?',
-    a: 'Aryanka uses a multi-pronged organic strategy: (1) SEO-optimized blog content that ranks on Google, (2) automated syndication to LinkedIn, Reddit, Medium, Twitter/X, and YouTube, and (3) structured data/schema markup to maximize search visibility. Your content works 24/7 — no ad budget needed.',
+    a: 'Aryanka uses a multi-pronged organic strategy: SEO-optimized blog content that ranks on Google, automated syndication to 6 platforms, and structured schema markup to maximize search visibility. Your content works 24/7 — no ad budget needed.',
   },
   {
     q: 'Is Aryanka suitable for B2B AND B2C?',
     a: 'Yes. Aryanka has separate lead capture flows, email templates, and scoring models optimized for both B2B (longer sales cycles, account-based nurturing) and B2C (high-volume, fast conversion). You can run both from one account.',
   },
   {
-    q: 'What platforms does the content syndication support?',
-    a: 'Currently: LinkedIn (articles + posts), Reddit (targeted subreddits), Medium (publications), Twitter/X (threads), and YouTube (shorts scripts + descriptions). Instagram and Product Hunt support are on our Q2 roadmap.',
+    q: 'What platforms does content syndication support?',
+    a: 'LinkedIn, Reddit, Medium, Twitter/X, YouTube, and Instagram — all 6 simultaneously. Connect your accounts in Settings and Aryanka handles posting, formatting, and scheduling automatically.',
   },
   {
     q: 'How does the email nurture pipeline work?',
-    a: 'When a lead is captured, they\'re automatically enrolled in a behaviorally-triggered email sequence. Sequences are customizable by lead source, industry, and intent score. We use Resend for delivery — free up to 3,000 emails/month on the Starter plan.',
+    a: "When a lead is captured, they're automatically enrolled in a behaviorally-triggered email sequence. Fully customizable by lead source, industry, and intent score. Powered by Resend — 5K emails/month free on the Pro plan.",
   },
   {
-    q: 'Do I need technical knowledge to use Aryanka?',
-    a: 'No. Aryanka is fully no-code for marketers. The SEO, syndication, and lead capture systems run automatically once configured. Developers can use our API for deeper integrations.',
+    q: 'Do I need technical skills to use Aryanka?',
+    a: 'No. Aryanka is fully no-code for marketers. SEO, syndication, and lead capture run automatically once configured. Developers can use our API for deeper integrations.',
   },
   {
-    q: 'Can I connect my existing CRM (Salesforce, HubSpot)?',
-    a: 'Enterprise plan includes native integrations with Salesforce, HubSpot, Pipedrive, and Zoho. Growth plan users can connect via Zapier. Our built-in CRM Lite handles the full pipeline for most teams.',
-  },
-  {
-    q: 'What makes Aryanka different from HubSpot or Mailchimp?',
-    a: 'HubSpot costs $800+/month for similar features. Mailchimp is email-only. Aryanka is purpose-built for organic growth — combining content syndication, SEO, lead capture, email, and CRM in one unified platform at a fraction of the cost.',
-  },
-  {
-    q: 'How quickly can I expect results?',
-    a: 'Most users see measurable organic traffic growth within 30-60 days of consistent content publishing. SEO results compound over time. Lead capture improvements are immediate from day 1.',
+    q: "What makes Aryanka different from HubSpot?",
+    a: 'HubSpot costs $800+/month for comparable features. Aryanka is purpose-built for organic growth — combining content syndication, SEO, lead capture, email nurture, and CRM in one platform at a fraction of the price. Start free.',
   },
 ];
 
@@ -43,52 +34,45 @@ export default function FAQ() {
   const [openIdx, setOpenIdx] = useState<number | null>(null);
 
   return (
-    <section id="faq" className="py-24">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="faq" className="py-20 relative">
+      <div className="absolute inset-x-0 top-0 h-px"
+        style={{ background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.04), transparent)' }} />
+
+      <div className="max-w-2xl mx-auto px-5 sm:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-4xl sm:text-5xl font-bold text-white mb-4">
-            Frequently Asked{' '}
-            <span className="text-gradient">Questions</span>
+          <h2 className="text-[clamp(1.75rem,3vw,2.75rem)] font-bold tracking-tight text-white mb-3">
+            Questions & answers
           </h2>
-          <p className="text-lg text-navy-300">
+          <p className="text-white/35 text-base font-light">
             Everything you need to know about Aryanka.
           </p>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           {faqs.map((faq, idx) => (
             <div
               key={idx}
-              className="bg-glass rounded-xl border border-white/5 overflow-hidden"
+              className="rounded-xl border border-white/[0.06] overflow-hidden transition-all duration-200 hover:border-white/[0.1]"
+              style={{ background: 'rgba(255,255,255,0.02)' }}
             >
               <button
-                className="w-full px-6 py-5 flex items-center justify-between text-left gap-4 hover:bg-white/5 transition-colors"
+                className="w-full px-6 py-4 flex items-start justify-between text-left gap-4 group"
                 onClick={() => setOpenIdx(openIdx === idx ? null : idx)}
               >
-                <span className="font-medium text-white text-sm sm:text-base">
+                <span className="text-sm font-medium text-white/70 group-hover:text-white/90 transition-colors leading-relaxed">
                   {faq.q}
                 </span>
-                <ChevronDown
-                  className={`w-5 h-5 text-navy-400 flex-shrink-0 transition-transform duration-200 ${
-                    openIdx === idx ? 'rotate-180' : ''
+                <Plus
+                  className={`w-4 h-4 flex-shrink-0 mt-0.5 transition-all duration-200 ${
+                    openIdx === idx ? 'rotate-45 text-white/60' : 'text-white/20'
                   }`}
                 />
               </button>
-              <AnimatePresence>
-                {openIdx === idx && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="px-6 pb-5 text-sm text-navy-400 leading-relaxed border-t border-white/5 pt-4">
-                      {faq.a}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {openIdx === idx && (
+                <div className="px-6 pb-5 text-sm text-white/35 leading-relaxed border-t border-white/[0.04] pt-3">
+                  {faq.a}
+                </div>
+              )}
             </div>
           ))}
         </div>

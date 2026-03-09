@@ -1,146 +1,172 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import {
-  Globe,
-  Search,
-  Mail,
-  BarChart3,
-  Users,
-  Share2,
-  Target,
-  Zap,
-  ArrowRight,
-} from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { Share2, Search, Target, Mail, BarChart3, Users } from 'lucide-react';
 
 const features = [
   {
     icon: Share2,
-    title: 'Multi-Platform Content Syndication',
+    tag: 'Syndication',
+    title: 'Write once. Publish everywhere.',
     description:
-      'Write once. Instantly distribute to LinkedIn, Reddit, Medium, Twitter/X, and YouTube — driving organic traffic from every channel simultaneously.',
-    badge: 'Organic Traffic',
-    color: 'from-brand-500 to-brand-600',
+      'One piece of content, distributed automatically to LinkedIn, Reddit, Medium, Twitter/X, YouTube, and Instagram — all at once.',
+    color: '#00D4FF',
+    size: 'large',
   },
   {
     icon: Search,
-    title: 'SEO-Optimized Blog & Landing Pages',
-    description:
-      'Auto-generated keyword-rich blog posts, meta tags, schema markup, and dynamic sitemaps that rank on Google without manual effort.',
-    badge: 'SEO',
-    color: 'from-purple-500 to-purple-600',
+    tag: 'SEO',
+    title: 'Auto-generated SEO blog',
+    description: 'Keyword-rich posts, schema markup, and dynamic sitemaps that rank on Google without manual effort.',
+    color: '#3B82F6',
+    size: 'small',
   },
   {
     icon: Target,
-    title: 'Smart Lead Capture System',
-    description:
-      'High-converting forms, exit-intent pop-ups, embedded CTAs, and inline captures — all tailored for both B2B and B2C buyer journeys.',
-    badge: 'Lead Gen',
-    color: 'from-accent-500 to-accent-600',
+    tag: 'Lead Gen',
+    title: 'Smart lead capture',
+    description: 'High-converting forms, exit-intent pop-ups, and embedded CTAs tuned for B2B and B2C.',
+    color: '#10B981',
+    size: 'small',
   },
   {
     icon: Mail,
-    title: 'Automated Email Nurture Pipeline',
-    description:
-      'Behaviorally triggered email sequences that warm up cold leads and guide them to conversion — powered by Resend, free up to 3K/month.',
-    badge: 'Email',
-    color: 'from-yellow-500 to-orange-500',
+    tag: 'Email',
+    title: 'Automated nurture sequences',
+    description: 'Behaviorally triggered emails that warm cold leads and guide them to conversion — free up to 5K/month.',
+    color: '#F59E0B',
+    size: 'small',
   },
   {
     icon: BarChart3,
-    title: 'Unified Analytics Dashboard',
-    description:
-      'Track traffic sources, lead quality scores, funnel conversion rates, and revenue attribution — all in one real-time dashboard.',
-    badge: 'Analytics',
-    color: 'from-pink-500 to-rose-500',
+    tag: 'Analytics',
+    title: 'Unified analytics',
+    description: 'UTM tracking, source attribution, funnel conversion, and revenue analytics in one real-time dashboard.',
+    color: '#8B5CF6',
+    size: 'small',
   },
   {
     icon: Users,
+    tag: 'CRM',
     title: 'Built-in CRM Lite',
-    description:
-      'Manage your entire pipeline — from first touch to closed deal. Lead scoring, stage tracking, and activity logging included.',
-    badge: 'CRM',
-    color: 'from-cyan-500 to-blue-500',
+    description: 'Pipeline management, lead scoring, and activity logging — from first touch to closed deal.',
+    color: '#00D4FF',
+    size: 'small',
   },
 ];
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-};
-
 export default function Features() {
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.querySelectorAll('.reveal').forEach((el, i) => {
+              setTimeout(() => el.classList.add('visible'), i * 60);
+            });
+          }
+        });
+      },
+      { threshold: 0.05 }
+    );
+    if (sectionRef.current) observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const large = features.filter((f) => f.size === 'large');
+  const small = features.filter((f) => f.size === 'small');
+
   return (
-    <section id="features" className="py-24 relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="features" ref={sectionRef} className="py-28 relative overflow-hidden">
+      {/* Ambient glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse, rgba(0,212,255,0.04) 0%, transparent 70%)' }} />
+
+      <div className="max-w-7xl mx-auto px-5 sm:px-8">
         {/* Header */}
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 bg-brand-500/10 border border-brand-500/20 rounded-full px-4 py-1.5 mb-4">
-            <Zap className="w-3.5 h-3.5 text-brand-400" />
-            <span className="text-xs font-medium text-brand-300">Everything You Need to Grow</span>
+        <div className="max-w-2xl mb-16">
+          <div className="reveal inline-flex items-center gap-2 mb-5 px-3 py-1 rounded-full text-xs font-medium border"
+            style={{ background: 'rgba(0,212,255,0.05)', borderColor: 'rgba(0,212,255,0.15)', color: 'rgba(0,212,255,0.8)' }}>
+            Everything you need
           </div>
-          <h2 className="text-4xl sm:text-5xl font-bold text-white mb-4">
-            Your Complete{' '}
-            <span className="text-gradient">Growth Engine</span>
+          <h2 className="reveal reveal-delay-1 text-[clamp(2rem,4vw,3.5rem)] font-bold leading-tight tracking-tight text-white mb-4">
+            Your complete<br />
+            <span className="text-gradient">growth engine</span>
           </h2>
-          <p className="text-lg text-navy-300 max-w-2xl mx-auto">
-            Six powerful modules working together to generate, capture, nurture,
-            and convert leads — entirely on organic traffic.
+          <p className="reveal reveal-delay-2 text-white/40 text-lg leading-relaxed font-light">
+            Six powerful modules that work together to generate, capture,
+            nurture, and convert leads — entirely on organic traffic.
           </p>
         </div>
 
-        {/* Features grid */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-100px' }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
-          {features.map((feature) => (
-            <motion.div
+        {/* Asymmetric grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
+          {/* Large feature card (col-span-2) */}
+          {large.map((feature) => (
+            <div
               key={feature.title}
-              variants={itemVariants}
-              className="group relative bg-glass rounded-2xl p-6 hover:bg-white/8 transition-all duration-300 cursor-pointer"
+              className="reveal lg:col-span-2 group relative rounded-2xl p-8 border border-white/[0.06] overflow-hidden transition-all duration-300 hover:border-white/[0.12] cursor-default"
+              style={{ background: 'rgba(255,255,255,0.02)' }}
             >
+              {/* Hover glow */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl"
+                style={{ background: `radial-gradient(circle at 30% 40%, ${feature.color}08 0%, transparent 60%)` }} />
+
               {/* Icon */}
-              <div
-                className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200`}
-              >
-                <feature.icon className="w-6 h-6 text-white" />
+              <div className="relative w-12 h-12 rounded-xl flex items-center justify-center mb-6 border border-white/[0.06]"
+                style={{ background: `${feature.color}12` }}>
+                <feature.icon className="w-5 h-5" style={{ color: feature.color }} />
               </div>
 
-              {/* Badge */}
-              <span
-                className={`inline-block text-xs font-semibold bg-gradient-to-r ${feature.color} bg-clip-text text-transparent mb-2`}
-              >
-                {feature.badge}
-              </span>
-
-              <h3 className="text-lg font-semibold text-white mb-2">
-                {feature.title}
-              </h3>
-              <p className="text-sm text-navy-400 leading-relaxed">
-                {feature.description}
-              </p>
-
-              <div className="mt-4 flex items-center gap-1 text-xs text-brand-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                <span>Learn more</span>
-                <ArrowRight className="w-3 h-3" />
+              {/* Tag */}
+              <div className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: feature.color }}>
+                {feature.tag}
               </div>
 
-              {/* Hover border glow */}
-              <div
-                className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}
-              />
-            </motion.div>
+              <h3 className="text-xl font-semibold text-white mb-3 leading-snug">{feature.title}</h3>
+              <p className="text-white/40 text-sm leading-relaxed">{feature.description}</p>
+
+              {/* Decorative platform pills */}
+              <div className="mt-8 flex flex-wrap gap-1.5">
+                {['LinkedIn', 'Reddit', 'Medium', 'Twitter', 'YouTube', 'Instagram'].map((p) => (
+                  <span key={p} className="text-[10px] px-2 py-1 rounded-md border border-white/[0.06] text-white/25"
+                    style={{ background: 'rgba(255,255,255,0.02)' }}>
+                    {p}
+                  </span>
+                ))}
+              </div>
+            </div>
           ))}
-        </motion.div>
+
+          {/* Small feature cards (col-span-3, 2x2+1 grid) */}
+          <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {small.map((feature, i) => (
+              <div
+                key={feature.title}
+                className={`reveal reveal-delay-${i + 1} group relative rounded-2xl p-6 border border-white/[0.06] overflow-hidden transition-all duration-300 hover:border-white/[0.12] cursor-default`}
+                style={{ background: 'rgba(255,255,255,0.02)' }}
+              >
+                {/* Hover glow */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-2xl"
+                  style={{ background: `radial-gradient(circle at 20% 20%, ${feature.color}07 0%, transparent 60%)` }} />
+
+                {/* Icon */}
+                <div className="relative w-10 h-10 rounded-lg flex items-center justify-center mb-4 border border-white/[0.06]"
+                  style={{ background: `${feature.color}10` }}>
+                  <feature.icon className="w-4 h-4" style={{ color: feature.color }} />
+                </div>
+
+                <div className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: feature.color }}>
+                  {feature.tag}
+                </div>
+                <h3 className="text-[15px] font-semibold text-white mb-2 leading-snug">{feature.title}</h3>
+                <p className="text-white/35 text-xs leading-relaxed">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );

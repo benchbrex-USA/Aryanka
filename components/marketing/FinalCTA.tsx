@@ -1,100 +1,92 @@
 'use client';
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { ArrowRight, CheckCircle } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
 
-const benefits = [
-  'Free forever plan — no credit card',
-  'Setup in under 5 minutes',
+const perks = [
+  'Free forever plan',
+  'No credit card required',
+  'Setup in 5 minutes',
   'Cancel anytime',
 ];
 
 export default function FinalCTA() {
-  const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-    setLoading(true);
-    try {
-      const res = await fetch('/api/leads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, source: 'final_cta', type: 'signup' }),
-      });
-      if (res.ok) {
-        toast({ title: 'Welcome aboard!', description: 'Check your email for your access link.' });
-        setEmail('');
-      }
-    } catch {
-      toast({ title: 'Error', description: 'Please try again.', variant: 'destructive' });
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.querySelectorAll('.reveal').forEach((el, i) => {
+              setTimeout(() => el.classList.add('visible'), i * 100);
+            });
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+    if (sectionRef.current) observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <section id="book-demo" className="py-24 relative overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-brand-500/5 to-transparent pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
+    <section id="book-demo" ref={sectionRef} className="py-28 relative overflow-hidden">
+      <div className="absolute inset-x-0 top-0 h-px"
+        style={{ background: 'linear-gradient(to right, transparent, rgba(0,212,255,0.12), transparent)' }} />
 
-      <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 className="text-4xl sm:text-5xl font-bold text-white mb-4">
-          Start Growing Organically{' '}
-          <span className="text-gradient">Today</span>
-        </h2>
-        <p className="text-lg text-navy-300 mb-8 max-w-xl mx-auto">
-          Join 2,400+ businesses that have replaced their entire paid ad stack
-          with Aryanka — and never looked back.
-        </p>
+      {/* Background glow */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full"
+          style={{ background: 'radial-gradient(ellipse, rgba(0,212,255,0.07) 0%, transparent 70%)' }} />
+      </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto mb-6"
-        >
-          <Input
-            type="email"
-            placeholder="Enter your work email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="flex-1 h-14 text-base"
-          />
-          <Button
-            type="submit"
-            variant="gradient"
-            size="lg"
-            disabled={loading}
-            className="sm:w-auto w-full"
-          >
-            {loading ? 'Signing up...' : 'Get Started Free'}
-            <ArrowRight className="w-4 h-4" />
-          </Button>
-        </form>
-
-        <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
-          {benefits.map((b) => (
-            <div key={b} className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-accent-400" />
-              <span className="text-sm text-navy-400">{b}</span>
-            </div>
-          ))}
+      <div className="relative z-10 max-w-4xl mx-auto px-5 sm:px-8 text-center">
+        {/* Label */}
+        <div className="reveal inline-flex items-center gap-2 mb-6 px-3 py-1 rounded-full text-xs font-medium border"
+          style={{ background: 'rgba(0,212,255,0.05)', borderColor: 'rgba(0,212,255,0.15)', color: 'rgba(0,212,255,0.8)' }}>
+          Get started today
         </div>
 
-        <div className="border-t border-white/5 pt-8">
-          <p className="text-sm text-navy-500 mb-4">
-            Or book a personalized 30-minute demo
-          </p>
-          <Button variant="outline" size="lg" asChild>
-            <a href="mailto:demo@aryanka.io?subject=Book a Demo">
-              Schedule a Demo Call
-            </a>
-          </Button>
+        {/* Headline */}
+        <h2 className="reveal reveal-delay-1 text-[clamp(2.5rem,5vw,4.5rem)] font-bold leading-tight tracking-tight text-white mb-5">
+          Start growing
+          <br />
+          <span className="text-gradient">without paying for ads</span>
+        </h2>
+
+        <p className="reveal reveal-delay-2 text-white/40 text-lg font-light mb-10 max-w-xl mx-auto">
+          Join 2,400+ companies that replaced their entire paid ad stack with Aryanka.
+          Free to start. No sales calls needed.
+        </p>
+
+        {/* CTA buttons */}
+        <div className="reveal reveal-delay-3 flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
+          <Link
+            href="/login"
+            className="group flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-semibold text-[#080808] transition-all duration-200 hover:opacity-90 hover:scale-[0.98]"
+            style={{ background: 'linear-gradient(135deg, #00D4FF, #3B82F6)' }}
+          >
+            Start for free
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+          <a
+            href="mailto:demo@aryanka.io?subject=Book a Demo"
+            className="flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-medium text-white/60 border border-white/[0.08] hover:border-white/20 hover:text-white/90 transition-all duration-200"
+          >
+            Book a demo call
+          </a>
+        </div>
+
+        {/* Perks */}
+        <div className="reveal reveal-delay-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+          {perks.map((perk) => (
+            <div key={perk} className="flex items-center gap-1.5">
+              <CheckCircle className="w-3.5 h-3.5" style={{ color: '#10B981' }} />
+              <span className="text-xs text-white/30">{perk}</span>
+            </div>
+          ))}
         </div>
       </div>
     </section>

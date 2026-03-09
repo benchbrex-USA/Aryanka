@@ -1,155 +1,216 @@
 'use client';
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ArrowRight, Play, Star, Users, TrendingUp, Zap } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
+import { useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { ArrowRight, TrendingUp, Users, Zap } from 'lucide-react';
 
 const stats = [
-  { icon: Users, value: '2,400+', label: 'Active Users' },
-  { icon: TrendingUp, value: '340%', label: 'Avg Traffic Growth' },
-  { icon: Star, value: '4.9/5', label: 'User Rating' },
+  { value: '2,400+', label: 'Companies growing', icon: Users },
+  { value: '340%', label: 'Avg traffic growth', icon: TrendingUp },
+  { value: '0₹', label: 'Ad spend required', icon: Zap },
 ];
 
 export default function Hero() {
-  const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-    setLoading(true);
-    try {
-      const res = await fetch('/api/leads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, source: 'hero', type: 'signup' }),
-      });
-      if (res.ok) {
-        toast({ title: 'You\'re on the list!', description: 'We\'ll be in touch shortly.', variant: 'default' });
-        setEmail('');
-      }
-    } catch {
-      toast({ title: 'Something went wrong', description: 'Please try again.', variant: 'destructive' });
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.querySelectorAll('.reveal').forEach((el, i) => {
+              setTimeout(() => el.classList.add('visible'), i * 80);
+            });
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+    if (sectionRef.current) observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden grid-bg pt-16">
-      {/* Background glows */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-brand-500/10 rounded-full blur-3xl" />
-        <div className="absolute top-1/3 left-1/4 w-[400px] h-[400px] bg-accent-500/8 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] bg-brand-600/8 rounded-full blur-3xl" />
+    <section
+      ref={sectionRef}
+      className="relative min-h-screen flex items-center justify-center overflow-hidden pt-[60px]"
+      style={{ background: '#080808' }}
+    >
+      {/* Animated gradient mesh */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div
+          className="mesh-orb-1 absolute top-[-20%] left-[15%] w-[600px] h-[600px] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(0,212,255,0.08) 0%, transparent 70%)' }}
+        />
+        <div
+          className="mesh-orb-2 absolute top-[10%] right-[5%] w-[500px] h-[500px] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.07) 0%, transparent 70%)' }}
+        />
+        <div
+          className="mesh-orb-3 absolute bottom-[0%] left-[30%] w-[700px] h-[400px] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(0,212,255,0.04) 0%, transparent 70%)' }}
+        />
+        {/* Dot grid */}
+        <div className="absolute inset-0 grid-bg opacity-40" />
+        {/* Vignette */}
+        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at center, transparent 40%, #080808 100%)' }} />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+      <div className="relative z-10 max-w-6xl mx-auto px-5 sm:px-8 py-20 text-center">
+
         {/* Badge */}
-        <div className="inline-flex items-center gap-2 bg-brand-500/10 border border-brand-500/20 rounded-full px-4 py-1.5 mb-8 animate-fade-in">
-          <Zap className="w-3.5 h-3.5 text-brand-400" />
-          <span className="text-xs font-medium text-brand-300">
-            The #1 Organic Growth Platform for B2B & B2C SaaS
-          </span>
+        <div className="reveal inline-flex items-center gap-2 mb-8 px-3 py-1.5 rounded-full text-xs font-medium border"
+          style={{ background: 'rgba(0,212,255,0.05)', borderColor: 'rgba(0,212,255,0.2)', color: '#00D4FF' }}>
+          <span className="w-1.5 h-1.5 rounded-full bg-[#00D4FF] animate-pulse" />
+          Now in public beta — join 2,400+ teams
         </div>
 
         {/* Headline */}
-        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6 animate-fade-up">
-          Grow Your Business{' '}
-          <span className="text-gradient">Without Spending</span>
+        <h1 className="reveal reveal-delay-1 text-[clamp(2.8rem,6vw,5.5rem)] font-bold leading-[1.05] tracking-tight text-white mb-6">
+          Grow your business
           <br />
-          a Rupee on Ads
+          <span className="text-gradient">without paying</span>
+          <br />
+          for ads
         </h1>
 
         {/* Sub-headline */}
-        <p className="text-lg sm:text-xl text-navy-300 max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-up">
-          Aryanka automates your entire growth engine — multi-platform content
-          syndication, SEO optimization, lead capture, email nurture, and a
-          built-in CRM. All organic. Zero paid traffic.
+        <p className="reveal reveal-delay-2 text-[clamp(1rem,2vw,1.2rem)] text-white/40 max-w-2xl mx-auto mb-10 leading-relaxed font-light">
+          Aryanka automates content syndication to 6 platforms, captures leads with smart forms,
+          nurtures them via email, and tracks everything in one unified dashboard.
         </p>
 
-        {/* Email capture */}
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto mb-6 animate-fade-up"
-        >
-          <Input
-            type="email"
-            placeholder="Enter your work email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="flex-1 h-14 text-base"
-          />
-          <Button
-            type="submit"
-            variant="gradient"
-            size="lg"
-            disabled={loading}
-            className="sm:w-auto w-full"
+        {/* CTA buttons */}
+        <div className="reveal reveal-delay-3 flex flex-col sm:flex-row items-center justify-center gap-3 mb-16">
+          <Link
+            href="/login"
+            className="group flex items-center gap-2 px-7 py-3.5 rounded-xl text-sm font-semibold text-[#080808] transition-all duration-200 hover:opacity-90 hover:scale-[0.98]"
+            style={{ background: 'linear-gradient(135deg, #00D4FF, #3B82F6)' }}
           >
-            {loading ? 'Joining...' : 'Get Early Access'}
-            <ArrowRight className="w-4 h-4" />
-          </Button>
-        </form>
-
-        <p className="text-xs text-navy-500 mb-12 animate-fade-in">
-          No credit card required. Free forever plan available.
-        </p>
-
-        {/* Demo CTA */}
-        <div className="flex items-center justify-center gap-4 mb-16 animate-fade-up">
-          <Button variant="outline" size="lg" asChild>
-            <a href="#book-demo">
-              Book a Live Demo
-            </a>
-          </Button>
-          <button className="flex items-center gap-2 text-sm text-navy-300 hover:text-white transition-colors group">
-            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-brand-500/20 transition-colors border border-white/10">
-              <Play className="w-4 h-4 ml-0.5" />
-            </div>
-            Watch 2-min demo
-          </button>
+            Sign up free
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+          <Link
+            href="#how-it-works"
+            className="flex items-center gap-2 px-7 py-3.5 rounded-xl text-sm font-medium text-white/60 border border-white/[0.08] hover:border-white/20 hover:text-white/90 transition-all duration-200"
+          >
+            See how it works
+          </Link>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-6 max-w-lg mx-auto animate-fade-up">
-          {stats.map(({ icon: Icon, value, label }) => (
-            <div key={label} className="text-center">
-              <div className="flex items-center justify-center gap-1 mb-1">
-                <Icon className="w-4 h-4 text-brand-400" />
-                <span className="text-2xl font-bold text-white">{value}</span>
+        {/* Stats bar */}
+        <div className="reveal reveal-delay-4 inline-flex items-center gap-0 rounded-2xl border border-white/[0.06] overflow-hidden mb-20"
+          style={{ background: 'rgba(255,255,255,0.02)' }}>
+          {stats.map((stat, i) => (
+            <div key={stat.label} className="flex items-center gap-3 px-6 py-4 relative group hover:bg-white/[0.03] transition-colors">
+              {i > 0 && <div className="absolute left-0 top-3 bottom-3 w-px bg-white/[0.06]" />}
+              <stat.icon className="w-4 h-4 flex-shrink-0" style={{ color: '#00D4FF' }} />
+              <div className="text-left">
+                <div className="text-sm font-bold text-white">{stat.value}</div>
+                <div className="text-xs text-white/30">{stat.label}</div>
               </div>
-              <span className="text-xs text-navy-400">{label}</span>
             </div>
           ))}
         </div>
 
-        {/* Product preview placeholder */}
-        <div className="mt-20 relative max-w-5xl mx-auto animate-fade-up">
-          <div className="bg-glass rounded-2xl p-1 shadow-2xl shadow-brand-500/10 border border-white/5">
-            <div className="bg-navy-800 rounded-xl p-6 min-h-[320px] flex items-center justify-center">
-              <div className="text-center">
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  {[
-                    { label: 'Leads This Month', value: '1,247', color: 'text-accent-400' },
-                    { label: 'Organic Traffic', value: '28.4K', color: 'text-brand-400' },
-                    { label: 'Conversion Rate', value: '8.3%', color: 'text-yellow-400' },
-                  ].map((stat) => (
-                    <div key={stat.label} className="bg-navy-900 rounded-xl p-4">
-                      <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
-                      <div className="text-xs text-navy-400 mt-1">{stat.label}</div>
-                    </div>
-                  ))}
+        {/* Dashboard mockup */}
+        <div className="reveal reveal-delay-5 relative max-w-4xl mx-auto">
+          {/* Glow behind */}
+          <div className="absolute -inset-8 rounded-3xl" style={{ background: 'radial-gradient(ellipse, rgba(0,212,255,0.08) 0%, transparent 70%)' }} />
+
+          {/* Window chrome */}
+          <div className="relative rounded-2xl overflow-hidden border border-white/[0.08]"
+            style={{ background: 'rgba(255,255,255,0.02)' }}>
+            {/* Title bar */}
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.05]"
+              style={{ background: 'rgba(255,255,255,0.02)' }}>
+              <div className="flex gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
+                <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
+              </div>
+              <div className="flex-1 mx-4">
+                <div className="mx-auto w-40 h-5 rounded-md text-center text-xs text-white/20 border border-white/[0.06] flex items-center justify-center"
+                  style={{ background: 'rgba(255,255,255,0.02)' }}>
+                  app.aryanka.io/dashboard
                 </div>
-                <p className="text-navy-500 text-sm">Dashboard Preview</p>
+              </div>
+            </div>
+
+            {/* Dashboard content */}
+            <div className="p-6" style={{ background: 'linear-gradient(180deg, #0d0d0d 0%, #080808 100%)' }}>
+              {/* Top stats row */}
+              <div className="grid grid-cols-3 gap-3 mb-5">
+                {[
+                  { label: 'Leads This Month', value: '1,247', change: '+23%', color: '#00D4FF' },
+                  { label: 'Organic Traffic', value: '28.4K', change: '+18%', color: '#3B82F6' },
+                  { label: 'Conversion Rate', value: '8.3%', change: '+2.1%', color: '#10B981' },
+                ].map((s) => (
+                  <div key={s.label} className="rounded-xl p-4 border border-white/[0.06]"
+                    style={{ background: 'rgba(255,255,255,0.03)' }}>
+                    <div className="text-xs text-white/30 mb-1.5">{s.label}</div>
+                    <div className="text-2xl font-bold text-white mb-1" style={{ color: s.color }}>{s.value}</div>
+                    <div className="text-xs font-medium" style={{ color: '#10B981' }}>{s.change} this month</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bottom row */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Mini chart */}
+                <div className="rounded-xl p-4 border border-white/[0.06]"
+                  style={{ background: 'rgba(255,255,255,0.02)' }}>
+                  <div className="text-xs text-white/30 mb-3">Lead sources</div>
+                  <div className="space-y-2">
+                    {[
+                      { label: 'LinkedIn', pct: 38, color: '#0077B5' },
+                      { label: 'Organic SEO', pct: 29, color: '#00D4FF' },
+                      { label: 'Reddit', pct: 18, color: '#FF4500' },
+                      { label: 'Direct', pct: 15, color: '#3B82F6' },
+                    ].map((s) => (
+                      <div key={s.label} className="flex items-center gap-2">
+                        <div className="text-xs text-white/40 w-16 flex-shrink-0">{s.label}</div>
+                        <div className="flex-1 h-1.5 rounded-full bg-white/[0.05]">
+                          <div className="h-full rounded-full" style={{ width: `${s.pct}%`, background: s.color, opacity: 0.8 }} />
+                        </div>
+                        <div className="text-xs text-white/30 w-7 text-right">{s.pct}%</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Recent leads */}
+                <div className="rounded-xl p-4 border border-white/[0.06]"
+                  style={{ background: 'rgba(255,255,255,0.02)' }}>
+                  <div className="text-xs text-white/30 mb-3">Recent leads</div>
+                  <div className="space-y-2.5">
+                    {[
+                      { name: 'Sarah M.', company: 'Acme Corp', score: 92 },
+                      { name: 'Raj P.', company: 'TechFlow', score: 87 },
+                      { name: 'Lisa K.', company: 'Venture AI', score: 74 },
+                    ].map((lead) => (
+                      <div key={lead.name} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold"
+                            style={{ background: 'rgba(0,212,255,0.15)', color: '#00D4FF' }}>
+                            {lead.name[0]}
+                          </div>
+                          <div>
+                            <div className="text-xs font-medium text-white/80">{lead.name}</div>
+                            <div className="text-[10px] text-white/30">{lead.company}</div>
+                          </div>
+                        </div>
+                        <div className="text-xs font-semibold px-1.5 py-0.5 rounded"
+                          style={{ background: 'rgba(16,185,129,0.15)', color: '#10B981' }}>
+                          {lead.score}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-          {/* Glow effect under product */}
-          <div className="absolute -inset-4 bg-brand-500/5 blur-2xl rounded-3xl -z-10" />
         </div>
       </div>
     </section>
