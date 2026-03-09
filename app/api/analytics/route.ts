@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
       .gte('created_at', since.toISOString()),
     supabase
       .from('leads')
-      .select('status, source, score, created_at')
+      .select('status, source, score, created_at, utm_source, utm_medium, utm_campaign')
       .gte('created_at', since.toISOString()),
     supabase
       .from('demo_bookings')
@@ -68,6 +68,25 @@ export async function GET(req: NextRequest) {
     dailyLeads.push({ date: dateStr, count });
   }
 
+  // UTM attribution breakdown
+  const utmSourceBreakdown = leads?.reduce((acc: Record<string, number>, l) => {
+    const key = l.utm_source || 'direct';
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {}) ?? {};
+
+  const utmMediumBreakdown = leads?.reduce((acc: Record<string, number>, l) => {
+    const key = l.utm_medium || 'none';
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {}) ?? {};
+
+  const utmCampaignBreakdown = leads?.reduce((acc: Record<string, number>, l) => {
+    if (!l.utm_campaign) return acc;
+    acc[l.utm_campaign] = (acc[l.utm_campaign] || 0) + 1;
+    return acc;
+  }, {}) ?? {};
+
   return NextResponse.json({
     summary: {
       totalLeads,
@@ -77,6 +96,9 @@ export async function GET(req: NextRequest) {
       conversionRate: totalLeads > 0 ? ((totalDemos / totalLeads) * 100).toFixed(1) : '0',
     },
     sourceBreakdown,
+    utmSourceBreakdown,
+    utmMediumBreakdown,
+    utmCampaignBreakdown,
     dailyLeads,
     events: events?.slice(0, 100),
   });

@@ -256,6 +256,40 @@ async function postToInstagram(accessToken: string, platformUserId: string, cont
 }
 
 // ============================================================
+// Medium — Publications API
+// ============================================================
+async function postToMedium(accessToken: string, platformUserId: string, content: PostContent): Promise<PostResult> {
+  const body = {
+    title: content.title,
+    contentFormat: 'html',
+    content: `<h1>${content.title}</h1><p>${content.body.replace(/\n/g, '</p><p>')}</p>${content.url ? `<p><a href="${content.url}">${content.url}</a></p>` : ''}`,
+    publishStatus: 'public',
+    tags: [],
+  };
+
+  const res = await fetch(`https://api.medium.com/v1/users/${platformUserId}/posts`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    return { success: false, error: `Medium: ${err}` };
+  }
+
+  const { data } = await res.json();
+  return {
+    success: true,
+    platform_post_id: data.id,
+    platform_post_url: data.url,
+  };
+}
+
+// ============================================================
 // Main dispatch function
 // ============================================================
 export async function postToPlatform(
@@ -276,6 +310,8 @@ export async function postToPlatform(
         return await postToYouTube(accessToken, content);
       case 'instagram':
         return await postToInstagram(accessToken, platformUserId, content);
+      case 'medium':
+        return await postToMedium(accessToken, platformUserId, content);
       default:
         return { success: false, error: `Unknown platform: ${platform}` };
     }

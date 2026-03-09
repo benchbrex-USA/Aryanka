@@ -17,19 +17,57 @@ import {
   Menu,
   X,
   BookOpen,
+  Globe,
+  UserPlus,
+  FlaskConical,
+  FormInput,
+  Receipt,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { User } from '@supabase/supabase-js';
 
-const navItems = [
-  { icon: LayoutDashboard, label: 'Overview', href: '/dashboard' },
-  { icon: Users, label: 'Leads & CRM', href: '/dashboard/leads' },
-  { icon: Share2, label: 'Syndication', href: '/dashboard/content' },
-  { icon: Mail, label: 'Email', href: '/dashboard/email' },
-  { icon: BarChart3, label: 'Analytics', href: '/dashboard/analytics' },
-  { icon: BookOpen, label: 'Blog & SEO', href: '/dashboard/blog' },
-  { icon: Settings, label: 'Settings', href: '/dashboard/settings' },
+const navGroups = [
+  {
+    label: null,
+    items: [
+      { icon: LayoutDashboard, label: 'Overview', href: '/dashboard' },
+    ],
+  },
+  {
+    label: 'Capture',
+    items: [
+      { icon: Users, label: 'Leads & CRM', href: '/dashboard/leads' },
+      { icon: FormInput, label: 'Forms', href: '/dashboard/forms' },
+    ],
+  },
+  {
+    label: 'Grow',
+    items: [
+      { icon: Share2, label: 'Syndication', href: '/dashboard/content' },
+      { icon: Mail, label: 'Email', href: '/dashboard/email' },
+      { icon: FlaskConical, label: 'A/B Tests', href: '/dashboard/ab-tests' },
+    ],
+  },
+  {
+    label: 'Insights',
+    items: [
+      { icon: BarChart3, label: 'Analytics', href: '/dashboard/analytics' },
+      { icon: BookOpen, label: 'Blog & SEO', href: '/dashboard/blog' },
+    ],
+  },
+  {
+    label: 'Account',
+    items: [
+      { icon: Globe, label: 'Workspaces', href: '/dashboard/workspaces' },
+      { icon: UserPlus, label: 'Team', href: '/dashboard/team' },
+      { icon: Receipt, label: 'Billing', href: '/dashboard/billing' },
+      { icon: Settings, label: 'Settings', href: '/dashboard/settings' },
+    ],
+  },
 ];
+
+// Flatten for isActive checks
+const navItems = navGroups.flatMap((g) => g.items);
 
 export default function Sidebar({ user }: { user: User | null }) {
   const pathname = usePathname();
@@ -63,25 +101,34 @@ export default function Sidebar({ user }: { user: User | null }) {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 p-4 space-y-0.5 overflow-y-auto">
-        {navItems.map(({ icon: Icon, label, href }) => (
-          <Link
-            key={href}
-            href={href}
-            onClick={() => setMobileOpen(false)}
-            className={cn(
-              'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
-              isActive(href)
-                ? 'bg-brand-500/20 text-brand-400 border border-brand-500/20'
-                : 'text-navy-400 hover:text-white hover:bg-white/5'
+      <nav className="flex-1 p-3 overflow-y-auto space-y-3">
+        {navGroups.map((group, gi) => (
+          <div key={gi}>
+            {group.label && (
+              <div className="px-3 pt-1 pb-1 text-xs font-semibold text-navy-600 uppercase tracking-wider">{group.label}</div>
             )}
-          >
-            <Icon className={cn('w-4 h-4', isActive(href) ? 'text-brand-400' : 'text-current')} />
-            {label}
-            {isActive(href) && (
-              <div className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-400" />
-            )}
-          </Link>
+            <div className="space-y-0.5">
+              {group.items.map(({ icon: Icon, label, href }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setMobileOpen(false)}
+                  className={cn(
+                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
+                    isActive(href)
+                      ? 'bg-brand-500/20 text-brand-400 border border-brand-500/20'
+                      : 'text-navy-400 hover:text-white hover:bg-white/5'
+                  )}
+                >
+                  <Icon className={cn('w-4 h-4', isActive(href) ? 'text-brand-400' : 'text-current')} />
+                  {label}
+                  {isActive(href) && (
+                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-400" />
+                  )}
+                </Link>
+              ))}
+            </div>
+          </div>
         ))}
       </nav>
 

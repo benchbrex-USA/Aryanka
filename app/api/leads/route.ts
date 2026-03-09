@@ -11,6 +11,14 @@ const LeadSchema = z.object({
   source: z.string().default('website'),
   type: z.enum(['signup', 'lead_magnet', 'newsletter', 'contact']).default('signup'),
   metadata: z.record(z.unknown()).optional(),
+  // UTM attribution
+  utm_source: z.string().optional(),
+  utm_medium: z.string().optional(),
+  utm_campaign: z.string().optional(),
+  utm_content: z.string().optional(),
+  utm_term: z.string().optional(),
+  referrer_url: z.string().optional(),
+  page_url: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -37,13 +45,20 @@ export async function POST(req: NextRequest) {
           name: data.name,
           company: data.company,
           phone: data.phone,
-          source: data.source,
+          source: data.utm_source || data.source,
           type: data.type,
           metadata: data.metadata ?? {},
           status: 'new',
           score: calculateLeadScore(data),
           ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip'),
           user_agent: req.headers.get('user-agent'),
+          utm_source: data.utm_source,
+          utm_medium: data.utm_medium,
+          utm_campaign: data.utm_campaign,
+          utm_content: data.utm_content,
+          utm_term: data.utm_term,
+          referrer_url: data.referrer_url || req.headers.get('referer'),
+          page_url: data.page_url,
         },
         { onConflict: 'email', ignoreDuplicates: false }
       )

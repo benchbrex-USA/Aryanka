@@ -8,6 +8,7 @@ const staticPages = [
   { url: '/book-demo', priority: 0.9, changeFrequency: 'weekly' as const },
   { url: '/privacy', priority: 0.3, changeFrequency: 'monthly' as const },
   { url: '/terms', priority: 0.3, changeFrequency: 'monthly' as const },
+  { url: '/status', priority: 0.4, changeFrequency: 'daily' as const },
 ];
 
 // In production, fetch blog slugs from Supabase

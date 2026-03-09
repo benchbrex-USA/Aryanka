@@ -2,7 +2,7 @@
 // Platform OAuth Configuration & Utilities
 // ============================================================
 
-export type Platform = 'linkedin' | 'twitter' | 'reddit' | 'youtube' | 'instagram';
+export type Platform = 'linkedin' | 'twitter' | 'reddit' | 'youtube' | 'instagram' | 'medium';
 
 export interface PlatformConfig {
   name: string;
@@ -79,6 +79,16 @@ export function getPlatformConfig(platform: Platform): PlatformConfig {
       scopes: ['instagram_basic', 'instagram_content_publish'],
       clientId: process.env.INSTAGRAM_CLIENT_ID || '',
       clientSecret: process.env.INSTAGRAM_CLIENT_SECRET || '',
+    },
+    medium: {
+      name: 'medium',
+      displayName: 'Medium',
+      color: '#000000',
+      authUrl: 'https://medium.com/m/oauth/authorize',
+      tokenUrl: 'https://api.medium.com/v1/tokens',
+      scopes: ['basicProfile', 'publishPost', 'listPublications'],
+      clientId: process.env.MEDIUM_CLIENT_ID || '',
+      clientSecret: process.env.MEDIUM_CLIENT_SECRET || '',
     },
   };
   return configs[platform];
@@ -264,6 +274,23 @@ export async function fetchPlatformProfile(
         platform_username: `@${data.username}`,
         platform_display_name: data.name || data.username,
         platform_avatar_url: data.profile_picture_url,
+        raw: data,
+      };
+    }
+
+    case 'medium': {
+      const res = await fetch('https://api.medium.com/v1/me', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const { data } = await res.json();
+      return {
+        platform_user_id: data.id,
+        platform_username: `@${data.username}`,
+        platform_display_name: data.name,
+        platform_avatar_url: data.imageUrl,
         raw: data,
       };
     }
