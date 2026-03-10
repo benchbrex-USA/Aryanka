@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { toast } from '@/components/ui/use-toast';
 import {
   Plus, Search, Pencil, Eye, BookOpen, Loader2,
-  Clock, Tag, ExternalLink, Sparkles,
+  Clock, ExternalLink, Sparkles, Share2, Mail, Linkedin, Twitter, Globe,
 } from 'lucide-react';
 
 type Post = {
@@ -53,6 +53,10 @@ export default function BlogPage() {
   const [aiOpen, setAiOpen] = useState(false);
   const [aiForm, setAiForm] = useState<AiForm>(EMPTY_AI_FORM);
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [distributeOpen, setDistributeOpen] = useState(false);
+  const [distributePost, setDistributePost] = useState<Post | null>(null);
+  const [distributing, setDistributing] = useState<Record<string, boolean>>({});
+  const [distributed, setDistributed] = useState<Record<string, boolean>>({});
 
   const fetchPosts = async () => {
     setLoading(true);
@@ -144,6 +148,49 @@ export default function BlogPage() {
       toast({ title: 'Failed to save post', description: 'Check your Supabase connection.', variant: 'destructive' });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const openDistribute = (post: Post) => {
+    setDistributePost(post);
+    setDistributed({});
+    setDistributeOpen(true);
+  };
+
+  const distributeChannel = async (channel: string) => {
+    if (!distributePost) return;
+    setDistributing((d) => ({ ...d, [channel]: true }));
+    try {
+      if (channel === 'email') {
+        await fetch('/api/email/campaigns', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: distributePost.title,
+            subject: distributePost.title,
+            preview_text: distributePost.excerpt || '',
+            html_content: `<h1>${distributePost.title}</h1><p>${distributePost.excerpt || ''}</p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://aryanka.io'}/blog/${distributePost.slug}">Read full post →</a>`,
+          }),
+        });
+      } else {
+        await fetch('/api/syndication/post', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            platform: channel,
+            blog_post_id: distributePost.id,
+            title: distributePost.title,
+            body: distributePost.excerpt || distributePost.title,
+            url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://aryanka.io'}/blog/${distributePost.slug}`,
+          }),
+        });
+      }
+      setDistributed((d) => ({ ...d, [channel]: true }));
+      toast({ title: `Distributed to ${channel}!` });
+    } catch {
+      toast({ title: `Failed: ${channel}`, variant: 'destructive' });
+    } finally {
+      setDistributing((d) => ({ ...d, [channel]: false }));
     }
   };
 
@@ -266,9 +313,14 @@ export default function BlogPage() {
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         {post.status === 'published' && (
-                          <a href={`/blog/${post.slug}`} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg hover:bg-white/10 text-navy-400 hover:text-white transition-colors" title="View">
-                            <Eye className="w-3.5 h-3.5" />
-                          </a>
+                          <>
+                            <a href={`/blog/${post.slug}`} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg hover:bg-white/10 text-navy-400 hover:text-white transition-colors" title="View">
+                              <Eye className="w-3.5 h-3.5" />
+                            </a>
+                            <button onClick={() => openDistribute(post)} className="p-1.5 rounded-lg hover:bg-brand-500/10 text-navy-400 hover:text-brand-400 transition-colors" title="Distribute">
+                              <Share2 className="w-3.5 h-3.5" />
+                            </button>
+                          </>
                         )}
                         <button onClick={() => openEdit(post)} className="p-1.5 rounded-lg hover:bg-white/10 text-navy-400 hover:text-white transition-colors" title="Edit">
                           <Pencil className="w-3.5 h-3.5" />
@@ -282,6 +334,54 @@ export default function BlogPage() {
           </div>
         </div>
       )}
+
+      {/* Distribute Modal */}
+      <Dialog open={distributeOpen} onOpenChange={setDistributeOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Share2 className="w-5 h-5 text-brand-400" />
+              Distribute Post
+            </DialogTitle>
+          </DialogHeader>
+          {distributePost && (
+            <div className="space-y-4">
+              <p className="text-sm text-navy-300 font-medium">{distributePost.title}</p>
+              <p className="text-xs text-navy-500">One-click distribution to all your connected channels:</p>
+              <div className="space-y-2">
+                {[
+                  { key: 'email', label: 'Email Campaign', icon: Mail, desc: 'Send to your subscriber list', color: 'text-brand-400' },
+                  { key: 'linkedin', label: 'LinkedIn', icon: Linkedin, desc: 'Post to your LinkedIn feed', color: 'text-blue-400' },
+                  { key: 'twitter', label: 'Twitter / X', icon: Twitter, desc: 'Tweet with link preview', color: 'text-sky-400' },
+                  { key: 'reddit', label: 'Reddit', icon: Globe, desc: 'Share to relevant subreddit', color: 'text-orange-400' },
+                ].map(({ key, label, icon: Icon, desc, color }) => (
+                  <div key={key} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
+                    <div className="flex items-center gap-3">
+                      <Icon className={`w-4 h-4 ${color}`} />
+                      <div>
+                        <div className="text-sm font-medium text-white">{label}</div>
+                        <div className="text-xs text-navy-500">{desc}</div>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant={distributed[key] ? 'outline' : 'gradient'}
+                      className="text-xs"
+                      onClick={() => distributeChannel(key)}
+                      disabled={distributing[key] || distributed[key]}
+                    >
+                      {distributing[key] ? <Loader2 className="w-3 h-3 animate-spin" /> : distributed[key] ? '✓ Sent' : 'Send'}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setDistributeOpen(false)}>Close</Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* AI Generate Modal */}
       <Dialog open={aiOpen} onOpenChange={setAiOpen}>

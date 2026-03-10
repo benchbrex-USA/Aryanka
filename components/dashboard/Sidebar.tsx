@@ -7,7 +7,6 @@ import { createClient } from '@/lib/supabase/client';
 import {
   LayoutDashboard,
   Users,
-  FileText,
   Mail,
   BarChart3,
   Settings,
@@ -23,6 +22,17 @@ import {
   FormInput,
   Receipt,
   Gift,
+  Calendar,
+  Kanban,
+  GitBranch,
+  Filter,
+  Rss,
+  Inbox,
+  Radio,
+  Sparkles,
+  Lightbulb,
+  Link2,
+  TrendingUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { User } from '@supabase/supabase-js';
@@ -41,14 +51,26 @@ const navGroups = [
     label: 'Capture',
     items: [
       { icon: Users, label: 'Leads & CRM', href: '/dashboard/leads' },
+      { icon: Kanban, label: 'Pipeline', href: '/dashboard/pipeline' },
       { icon: FormInput, label: 'Forms', href: '/dashboard/forms' },
+      { icon: Filter, label: 'Segments', href: '/dashboard/segments' },
     ],
   },
   {
-    label: 'Grow',
+    label: 'Outreach',
+    items: [
+      { icon: GitBranch, label: 'Sequences', href: '/dashboard/sequences' },
+      { icon: Inbox, label: 'AI Inbox', href: '/dashboard/inbox' },
+      { icon: Mail, label: 'Email', href: '/dashboard/email' },
+      { icon: Rss, label: 'Subscribers', href: '/dashboard/subscribers' },
+    ],
+  },
+  {
+    label: 'Content',
     items: [
       { icon: Share2, label: 'Syndication', href: '/dashboard/content' },
-      { icon: Mail, label: 'Email', href: '/dashboard/email' },
+      { icon: Calendar, label: 'Calendar', href: '/dashboard/calendar' },
+      { icon: Lightbulb, label: 'Inspiration', href: '/dashboard/inspiration' },
       { icon: FlaskConical, label: 'A/B Tests', href: '/dashboard/ab-tests' },
     ],
   },
@@ -56,6 +78,8 @@ const navGroups = [
     label: 'Insights',
     items: [
       { icon: BarChart3, label: 'Analytics', href: '/dashboard/analytics' },
+      { icon: TrendingUp, label: 'Attribution', href: '/dashboard/analytics/attribution' },
+      { icon: Radio, label: 'Social Listening', href: '/dashboard/listening' },
       { icon: BookOpen, label: 'Blog & SEO', href: '/dashboard/blog' },
     ],
   },
@@ -66,6 +90,7 @@ const navGroups = [
       { icon: UserPlus, label: 'Team', href: '/dashboard/team' },
       { icon: Receipt, label: 'Billing', href: '/dashboard/billing' },
       { icon: Gift, label: 'Referrals', href: '/dashboard/referrals' },
+      { icon: Link2, label: 'Agency Portal', href: '/dashboard/settings/agency' },
       { icon: Settings, label: 'Settings', href: '/dashboard/settings' },
     ],
   },

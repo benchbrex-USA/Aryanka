@@ -10,9 +10,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { toast } from '@/components/ui/use-toast';
 import {
   Plus, Linkedin, Globe, Twitter, Youtube, CheckCircle,
-  AlertCircle, Send, ExternalLink, Loader2, Link2, Link2Off,
-  Instagram, RefreshCw,
+  Send, Loader2, Link2, Link2Off,
+  Instagram, RefreshCw, Sparkles, Calendar,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 type Platform = 'linkedin' | 'twitter' | 'reddit' | 'youtube' | 'instagram';
 
@@ -56,7 +57,16 @@ const PLATFORM_META: Record<Platform, { label: string; icon: React.ElementType; 
 
 const ALL_PLATFORMS: Platform[] = ['linkedin', 'twitter', 'reddit', 'youtube', 'instagram'];
 
+const CHAR_LIMITS: Record<Platform, number> = {
+  twitter: 280,
+  linkedin: 3000,
+  reddit: 40000,
+  instagram: 2200,
+  youtube: 5000,
+};
+
 export default function ContentPage() {
+  const router = useRouter();
   const [connectedPlatforms, setConnectedPlatforms] = useState<ConnectedPlatform[]>([]);
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [platformPosts, setPlatformPosts] = useState<PlatformPost[]>([]);
@@ -67,6 +77,9 @@ export default function ContentPage() {
   const [syndicateOpen, setSyndicateOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<Platform>('linkedin');
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [platformContent, setPlatformContent] = useState<Partial<Record<Platform, string>>>({});
   const [form, setForm] = useState({
     title: '',
     content: '',
@@ -89,7 +102,49 @@ export default function ContentPage() {
       toast({ title: 'Connection failed', description: decodeURIComponent(error), variant: 'destructive' });
       window.history.replaceState({}, '', '/dashboard/content');
     }
+    // Load draft from inspiration/templates
+    const draft = sessionStorage.getItem('draft_content');
+    if (draft) {
+      try {
+        const { content, platform } = JSON.parse(draft);
+        setForm((f) => ({ ...f, content, platforms: platform && platform !== 'all' ? [platform as Platform] : [] }));
+        setPlatformContent({ [platform as Platform]: content });
+        if (platform && platform !== 'all') setActiveTab(platform as Platform);
+        setNewPostOpen(true);
+        sessionStorage.removeItem('draft_content');
+      } catch { /* ignore */ }
+    }
   }, []);
+
+  const handleAiGenerateAll = async () => {
+    if (!form.content && !form.title) {
+      toast({ title: 'Add some content first', description: 'Write your base content then click AI Optimize.' });
+      return;
+    }
+    setAiGenerating(true);
+    try {
+      const res = await fetch('/api/ai/content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'all_platforms',
+          existing_content: form.content || form.title,
+          topic: form.title,
+        }),
+      });
+      if (res.ok) {
+        const d = await res.json();
+        if (d.platforms) {
+          setPlatformContent(d.platforms);
+          toast({ title: 'AI optimized for all platforms!', description: 'Each tab now has platform-specific content.' });
+        }
+      }
+    } catch {
+      toast({ title: 'AI generation failed', variant: 'destructive' });
+    } finally {
+      setAiGenerating(false);
+    }
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -447,7 +502,7 @@ export default function ContentPage() {
 
       {/* New Post Modal */}
       <Dialog open={newPostOpen} onOpenChange={setNewPostOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create & Syndicate Content</DialogTitle>
           </DialogHeader>
@@ -463,18 +518,77 @@ export default function ContentPage() {
                 className="mt-1"
               />
             </div>
+
+            {/* Base content + AI optimize */}
             <div>
-              <Label htmlFor="post-content">Content *</Label>
+              <div className="flex items-center justify-between mb-1">
+                <Label htmlFor="post-content">Base Content *</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-7"
+                  onClick={handleAiGenerateAll}
+                  disabled={aiGenerating}
+                >
+                  {aiGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3 text-brand-400" />}
+                  AI Optimize All Platforms
+                </Button>
+              </div>
               <Textarea
                 id="post-content"
                 value={form.content}
                 onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
-                placeholder="Write your content here. It will be adapted for each platform..."
-                rows={6}
+                placeholder="Write your base content here. Use 'AI Optimize' to auto-adapt for each platform..."
+                rows={4}
                 required
                 className="mt-1"
               />
             </div>
+
+            {/* Per-platform tabs */}
+            {Object.keys(platformContent).length > 0 && (
+              <div className="border border-white/10 rounded-xl overflow-hidden">
+                <div className="flex border-b border-white/10">
+                  {ALL_PLATFORMS.filter((p) => platformContent[p]).map((p) => {
+                    const meta = PLATFORM_META[p];
+                    const Icon = meta.icon;
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setActiveTab(p)}
+                        className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium transition-all border-b-2 ${
+                          activeTab === p ? 'border-brand-500 text-brand-400 bg-brand-500/5' : 'border-transparent text-navy-400 hover:text-white'
+                        }`}
+                      >
+                        <Icon className={`w-3.5 h-3.5 ${meta.color}`} />
+                        {meta.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                {ALL_PLATFORMS.filter((p) => platformContent[p]).map((p) => {
+                  const content = platformContent[p] || '';
+                  const limit = CHAR_LIMITS[p];
+                  const over = content.length > limit;
+                  return activeTab === p ? (
+                    <div key={p} className="p-3">
+                      <Textarea
+                        value={content}
+                        onChange={(e) => setPlatformContent((prev) => ({ ...prev, [p]: e.target.value }))}
+                        rows={6}
+                        className="text-sm resize-none"
+                      />
+                      <div className={`text-right text-xs mt-1 ${over ? 'text-red-400' : 'text-navy-500'}`}>
+                        {content.length} / {limit}
+                      </div>
+                    </div>
+                  ) : null;
+                })}
+              </div>
+            )}
+
             <div>
               <Label htmlFor="post-url">Link URL (optional)</Label>
               <Input
@@ -539,7 +653,10 @@ export default function ContentPage() {
                 <p className="text-xs text-navy-500 mt-2">Connect platforms above to enable syndication.</p>
               )}
             </div>
-            <DialogFooter>
+            <DialogFooter className="gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => router.push('/dashboard/calendar')} disabled={saving}>
+                <Calendar className="w-4 h-4" /> Schedule
+              </Button>
               <Button type="button" variant="outline" onClick={() => setNewPostOpen(false)} disabled={saving}>Cancel</Button>
               <Button type="submit" variant="gradient" disabled={saving}>
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}

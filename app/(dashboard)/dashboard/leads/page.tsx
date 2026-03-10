@@ -23,7 +23,11 @@ import {
   Loader2,
   Users,
   AlertCircle,
+  Sparkles,
+  CheckCircle2,
+  Upload,
 } from 'lucide-react';
+import Link from 'next/link';
 import { toast } from '@/components/ui/use-toast';
 
 type Lead = {
@@ -37,6 +41,10 @@ type Lead = {
   score: number;
   notes: string | null;
   created_at: string;
+  enriched_at?: string | null;
+  email_verified?: boolean | null;
+  company_industry?: string | null;
+  company_size?: string | null;
 };
 
 type LeadForm = Omit<Lead, 'id' | 'created_at' | 'score'> & { score: string };
@@ -78,6 +86,8 @@ export default function LeadsPage() {
   const [deleting, setDeleting] = useState(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [enrichingId, setEnrichingId] = useState<string | null>(null);
+  const [bulkEnriching, setBulkEnriching] = useState(false);
   const LIMIT = 20;
 
   const fetchLeads = useCallback(async () => {
@@ -159,6 +169,49 @@ export default function LeadsPage() {
     URL.revokeObjectURL(url);
   };
 
+  const handleEnrich = async (lead: Lead) => {
+    setEnrichingId(lead.id);
+    try {
+      const res = await fetch('/api/leads/enrich', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lead_id: lead.id }),
+      });
+      if (res.ok) {
+        toast({ title: 'Lead enriched!', description: `${lead.name || lead.email} data updated.` });
+        fetchLeads();
+      } else {
+        toast({ title: 'Enrichment failed', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Network error', variant: 'destructive' });
+    } finally {
+      setEnrichingId(null);
+    }
+  };
+
+  const handleBulkEnrich = async () => {
+    setBulkEnriching(true);
+    try {
+      const res = await fetch('/api/leads/enrich', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bulk: true }),
+      });
+      if (res.ok) {
+        const d = await res.json();
+        toast({ title: `Enriched ${d.enriched} leads!`, description: d.failed ? `${d.failed} failed.` : undefined });
+        fetchLeads();
+      } else {
+        toast({ title: 'Bulk enrichment failed', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Network error', variant: 'destructive' });
+    } finally {
+      setBulkEnriching(false);
+    }
+  };
+
   const filtered = leads.filter((l) => {
     if (!search) return true;
     const q = search.toLowerCase();
@@ -173,10 +226,20 @@ export default function LeadsPage() {
           <h1 className="text-2xl font-bold text-white">Leads & CRM</h1>
           <p className="text-navy-400 mt-1 text-sm">{total.toLocaleString()} total leads in pipeline</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={exportCSV} disabled={leads.length === 0}>
             <Download className="w-4 h-4" />
-            Export CSV
+            Export
+          </Button>
+          <Link href="/dashboard/leads/import">
+            <Button variant="outline" size="sm">
+              <Upload className="w-4 h-4" />
+              Import
+            </Button>
+          </Link>
+          <Button variant="outline" size="sm" onClick={handleBulkEnrich} disabled={bulkEnriching}>
+            {bulkEnriching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-brand-400" />}
+            Bulk Enrich
           </Button>
           <Button variant="gradient" size="sm" onClick={openAdd}>
             <Plus className="w-4 h-4" />
@@ -270,6 +333,14 @@ export default function LeadsPage() {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => handleEnrich(lead)}
+                          disabled={enrichingId === lead.id}
+                          className="p-1.5 rounded-lg hover:bg-brand-500/10 text-navy-400 hover:text-brand-400 transition-colors"
+                          title={lead.enriched_at ? 'Re-enrich' : 'Enrich lead data'}
+                        >
+                          {enrichingId === lead.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : lead.enriched_at ? <CheckCircle2 className="w-3.5 h-3.5 text-green-400" /> : <Sparkles className="w-3.5 h-3.5" />}
+                        </button>
                         <button onClick={() => openEdit(lead)} className="p-1.5 rounded-lg hover:bg-white/10 text-navy-400 hover:text-white transition-colors" title="Edit">
                           <Pencil className="w-3.5 h-3.5" />
                         </button>

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Gift, Copy, Check, Users, TrendingUp } from 'lucide-react';
+import { Gift, Copy, Check, Users, TrendingUp, Star, Trophy, Zap } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { toast } from '@/components/ui/use-toast';
 
 interface ReferralStats {
@@ -96,6 +97,28 @@ export default function ReferralsPage() {
             {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             {copied ? 'Copied!' : 'Copy'}
           </button>
+        </div>
+      </div>
+
+      {/* Reward Tiers */}
+      <div className="bg-glass rounded-2xl border border-white/10 p-6 mb-6">
+        <h2 className="text-sm font-semibold text-white mb-4">Reward Tiers</h2>
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { tier: 'Starter', icon: Star, referrals: '1–2', reward: '1 month free', color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20', unlocked: (stats?.converted ?? 0) >= 1 },
+            { tier: 'Growth', icon: Zap, referrals: '3–9', reward: '3 months free + priority support', color: 'text-brand-400', bg: 'bg-brand-500/10 border-brand-500/20', unlocked: (stats?.converted ?? 0) >= 3 },
+            { tier: 'Champion', icon: Trophy, referrals: '10+', reward: '6 months free + co-marketing', color: 'text-accent-400', bg: 'bg-accent-500/10 border-accent-500/20', unlocked: (stats?.converted ?? 0) >= 10 },
+          ].map(({ tier, icon: Icon, referrals, reward, color, bg, unlocked }) => (
+            <div key={tier} className={`rounded-xl border p-4 ${bg} ${unlocked ? 'opacity-100' : 'opacity-50'}`}>
+              <div className="flex items-center justify-between mb-2">
+                <Icon className={`w-5 h-5 ${color}`} />
+                {unlocked && <Badge variant="success" className="text-xs">Unlocked</Badge>}
+              </div>
+              <div className={`font-bold text-sm ${color} mb-1`}>{tier}</div>
+              <div className="text-xs text-navy-400 mb-2">{referrals} conversions</div>
+              <div className="text-xs text-white font-medium">{reward}</div>
+            </div>
+          ))}
         </div>
       </div>
 
