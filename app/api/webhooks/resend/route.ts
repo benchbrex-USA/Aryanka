@@ -1,27 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
+import { createHmac, timingSafeEqual } from 'crypto';
 
-// Resend sends webhooks for email events.
-// Verify using the RESEND_WEBHOOK_SECRET environment variable.
-// Resend signs payloads with svix — we do a simple secret check here.
+// Resend signs webhook payloads using svix HMAC-SHA256.
+// Signed payload: `${svix-id}.${svix-timestamp}.${rawBody}`
+// Secret is base64-encoded: strip the "whsec_" prefix, base64-decode, use as key.
+async function verifyResendSignature(req: NextRequest, rawBody: string): Promise<boolean> {
+  const secret = process.env.RESEND_WEBHOOK_SECRET;
+  if (!secret) return false; // Fail closed — reject all if secret not configured
+
+  const svixId = req.headers.get('svix-id');
+  const svixTimestamp = req.headers.get('svix-timestamp');
+  const svixSignature = req.headers.get('svix-signature'); // format: "v1,base64sig"
+
+  if (!svixId || !svixTimestamp || !svixSignature) return false;
+
+  // Reject replayed webhooks older than 5 minutes
+  const ts = parseInt(svixTimestamp, 10);
+  if (isNaN(ts) || Math.abs(Date.now() / 1000 - ts) > 300) return false;
+
+  const secretBytes = Buffer.from(secret.replace(/^whsec_/, ''), 'base64');
+  const signedPayload = `${svixId}.${svixTimestamp}.${rawBody}`;
+  const expectedSig = createHmac('sha256', secretBytes).update(signedPayload).digest('base64');
+
+  // svix-signature may contain multiple sigs: "v1,sig1 v1,sig2"
+  const signatures = svixSignature.split(' ').map((s) => s.replace(/^v1,/, ''));
+  return signatures.some((sig) => {
+    try {
+      return timingSafeEqual(Buffer.from(sig, 'base64'), Buffer.from(expectedSig, 'base64'));
+    } catch {
+      return false;
+    }
+  });
+}
 
 export async function POST(req: NextRequest) {
-  const secret = process.env.RESEND_WEBHOOK_SECRET;
+  const rawBody = await req.text();
 
-  // Verify signature if secret is configured
-  if (secret) {
-    const svixId = req.headers.get('svix-id');
-    const svixTimestamp = req.headers.get('svix-timestamp');
-    const svixSignature = req.headers.get('svix-signature');
-
-    if (!svixId || !svixTimestamp || !svixSignature) {
-      return NextResponse.json({ error: 'Missing svix headers' }, { status: 400 });
-    }
+  const verified = await verifyResendSignature(req, rawBody);
+  if (!verified) {
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 
   let payload: Record<string, unknown>;
   try {
-    payload = await req.json();
+    payload = JSON.parse(rawBody);
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }

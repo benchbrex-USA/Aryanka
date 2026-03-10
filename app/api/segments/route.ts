@@ -70,7 +70,11 @@ async function countSegmentLeads(admin: ReturnType<typeof import('@/lib/supabase
     if (f.field === 'score_gte') query = query.gte('score', parseInt(f.value));
     if (f.field === 'score_lte') query = query.lte('score', parseInt(f.value));
     if (f.field === 'company_size') query = query.eq('company_size', f.value);
-    if (f.field === 'company_industry') query = query.ilike('company_industry', `%${f.value}%`);
+    if (f.field === 'company_industry') {
+      // Escape ILIKE special characters to prevent pattern manipulation
+      const escaped = f.value.replace(/[%_\\]/g, (c) => `\\${c}`);
+      query = query.ilike('company_industry', `%${escaped}%`);
+    }
   }
 
   const { count } = await query;

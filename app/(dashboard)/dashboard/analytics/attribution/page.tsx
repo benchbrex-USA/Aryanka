@@ -21,37 +21,17 @@ interface AttributionData {
   totals: { leads: number; demos: number; conversion_rate: string };
 }
 
-const MOCK_DATA: AttributionData = {
-  utmSources: [
-    { utm_source: 'linkedin', visitors: 1240, leads: 89, demos: 12, conversion_rate: '7.2%' },
-    { utm_source: 'google', visitors: 890, leads: 45, demos: 8, conversion_rate: '5.1%' },
-    { utm_source: 'twitter', visitors: 560, leads: 28, demos: 3, conversion_rate: '5.0%' },
-    { utm_source: 'reddit', visitors: 320, leads: 19, demos: 2, conversion_rate: '5.9%' },
-    { utm_source: 'email', visitors: 780, leads: 67, demos: 15, conversion_rate: '8.6%' },
-    { utm_source: 'direct', visitors: 450, leads: 31, demos: 5, conversion_rate: '6.9%' },
-  ],
-  topCampaigns: [
-    { utm_campaign: 'q1-launch', leads: 45, demos: 8 },
-    { utm_campaign: 'content-series', leads: 38, demos: 5 },
-    { utm_campaign: 'saas-guide', leads: 29, demos: 4 },
-    { utm_campaign: 'cold-outreach', leads: 22, demos: 6 },
-  ],
-  topMediums: [
-    { utm_medium: 'organic', leads: 120 },
-    { utm_medium: 'paid', leads: 89 },
-    { utm_medium: 'email', leads: 67 },
-    { utm_medium: 'social', leads: 45 },
-  ],
-  trend: Array.from({ length: 30 }, (_, i) => ({
-    date: new Date(Date.now() - (29 - i) * 86400000).toLocaleDateString('en', { month: 'short', day: 'numeric' }),
-    leads: Math.floor(Math.random() * 15) + 3,
-    demos: Math.floor(Math.random() * 3),
-  })),
-  totals: { leads: 279, demos: 45, conversion_rate: '16.1%' },
+
+const EMPTY_DATA: AttributionData = {
+  utmSources: [],
+  topCampaigns: [],
+  topMediums: [],
+  trend: [],
+  totals: { leads: 0, demos: 0, conversion_rate: '0%' },
 };
 
 export default function AttributionPage() {
-  const [data, setData] = useState<AttributionData>(MOCK_DATA);
+  const [data, setData] = useState<AttributionData>(EMPTY_DATA);
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(30);
   const [model, setModel] = useState<'first_touch' | 'last_touch' | 'linear'>('last_touch');
@@ -65,10 +45,10 @@ export default function AttributionPage() {
           const d = await res.json();
           setData(d);
         } else {
-          setData(MOCK_DATA);
+          setData(EMPTY_DATA);
         }
       } catch {
-        setData(MOCK_DATA);
+        setData(EMPTY_DATA);
       } finally {
         setLoading(false);
       }

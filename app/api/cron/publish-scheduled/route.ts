@@ -3,8 +3,10 @@ import { createAdminClient } from '@/lib/supabase/server';
 
 // Cron: runs every 5 minutes to publish scheduled posts
 export async function GET(req: NextRequest) {
+  // Fail closed: if CRON_SECRET not configured, block all requests
+  const cronSecret = process.env.CRON_SECRET;
   const secret = req.headers.get('x-cron-secret') || req.nextUrl.searchParams.get('secret');
-  if (secret !== process.env.CRON_SECRET) {
+  if (!cronSecret || secret !== cronSecret) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

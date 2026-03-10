@@ -42,9 +42,13 @@ export async function middleware(request: NextRequest) {
 
   // Redirect authenticated users away from /login
   if (user && pathname === '/login') {
-    const redirectTo = request.nextUrl.searchParams.get('redirectTo') || '/dashboard';
+    const rawRedirect = request.nextUrl.searchParams.get('redirectTo') || '/dashboard';
+    // Sanitize: only allow internal paths (must start with / and not //)
+    const safeRedirect = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//')
+      ? rawRedirect
+      : '/dashboard';
     const url = request.nextUrl.clone();
-    url.pathname = redirectTo;
+    url.pathname = safeRedirect;
     url.searchParams.delete('redirectTo');
     return NextResponse.redirect(url);
   }

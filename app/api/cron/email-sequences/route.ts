@@ -9,10 +9,10 @@ export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 export async function GET(req: NextRequest) {
-  // Verify cron secret to prevent unauthorized execution
+  // Verify cron secret — fail closed: if CRON_SECRET not set, block all requests
   const authHeader = req.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
