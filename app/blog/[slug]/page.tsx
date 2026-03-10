@@ -6,19 +6,21 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, Clock, Tag, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { createAdminClient } from '@/lib/supabase/server';
+import { marked } from 'marked';
 
-// In production: fetch from Supabase
-const posts: Record<string, {
+// Static fallback posts for slugs not yet in DB
+const STATIC_POSTS: Record<string, {
   title: string; excerpt: string; content: string;
-  tags: string[]; readTime: number; date: string; keywords: string[];
+  tags: string[]; reading_time: number; published_at: string; keywords: string[];
 }> = {
   'how-to-generate-b2b-leads-without-ads': {
     title: 'How to Generate 500 B2B Leads Per Month Without Spending on Ads',
     excerpt: 'A step-by-step playbook for generating high-quality B2B leads through content marketing, SEO, and social syndication — zero ad budget required.',
     keywords: ['b2b lead generation', 'organic leads', 'lead generation without ads'],
     tags: ['Lead Generation', 'B2B', 'Organic Traffic'],
-    readTime: 8,
-    date: 'January 15, 2024',
+    reading_time: 8,
+    published_at: '2024-01-15T00:00:00Z',
     content: `
 ## The Problem with Paid B2B Lead Generation
 
@@ -85,8 +87,8 @@ Ready to implement this system automatically? That's exactly what Aryanka does.
     excerpt: 'How fast-growing SaaS companies are driving tens of thousands of monthly visitors without a single paid click.',
     keywords: ['organic traffic saas', 'saas seo strategy', 'content marketing saas'],
     tags: ['SEO', 'SaaS', 'Content Marketing'],
-    readTime: 10,
-    date: 'January 10, 2024',
+    reading_time: 10,
+    published_at: '2024-01-10T00:00:00Z',
     content: `
 ## Why Organic Traffic is the Ultimate SaaS Growth Moat
 
@@ -142,29 +144,59 @@ Aryanka automates pillars 1, 2, and 4 — generating SEO-optimized content, buil
   },
 };
 
+async function getPost(slug: string) {
+  try {
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from('blog_posts')
+      .select('*')
+      .eq('slug', slug)
+      .eq('status', 'published')
+      .single();
+
+    if (data) {
+      // Increment view count (fire and forget)
+      void supabase
+        .from('blog_posts')
+        .update({ views: (data.views || 0) + 1 })
+        .eq('id', data.id);
+      return data;
+    }
+  } catch {
+    // fall through to static
+  }
+  return STATIC_POSTS[slug] || null;
+}
+
 export async function generateMetadata({
   params,
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
-  const post = posts[params.slug];
+  const post = await getPost(params.slug);
   if (!post) return genMeta({ title: 'Post Not Found', noIndex: true });
 
   return genMeta({
     title: post.title,
     description: post.excerpt,
-    keywords: post.keywords,
+    keywords: post.keywords || post.tags || [],
     path: `/blog/${params.slug}`,
   });
 }
 
 export async function generateStaticParams() {
-  return Object.keys(posts).map((slug) => ({ slug }));
+  return Object.keys(STATIC_POSTS).map((slug) => ({ slug }));
 }
 
-export default function BlogPostPage({ params }: { params: { slug: string } }) {
-  const post = posts[params.slug];
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+export default async function BlogPostPage({ params }: { params: { slug: string } }) {
+  const post = await getPost(params.slug);
   if (!post) notFound();
+
+  const publishedAt = post.published_at || post.created_at;
 
   return (
     <main className="min-h-screen bg-navy-900">
@@ -179,11 +211,11 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
 
         {/* Meta */}
         <div className="flex flex-wrap items-center gap-3 mb-6 text-xs text-navy-500">
-          <span>{post.date}</span>
+          {publishedAt && <span>{formatDate(publishedAt)}</span>}
           <span>·</span>
-          <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{post.readTime} min read</span>
+          <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{post.reading_time} min read</span>
           <div className="flex flex-wrap gap-1 ml-auto">
-            {post.tags.map((t) => (
+            {(post.tags || []).map((t: string) => (
               <span key={t} className="flex items-center gap-1 bg-white/5 text-navy-400 px-2 py-0.5 rounded">
                 <Tag className="w-2.5 h-2.5" />{t}
               </span>
@@ -205,7 +237,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
             prose-li:text-navy-300
             prose-strong:text-white prose-strong:font-semibold
             prose-a:text-brand-400 prose-a:no-underline hover:prose-a:underline"
-          dangerouslySetInnerHTML={{ __html: post.content.replace(/\n/g, '\n').replace(/##/g, '##') }}
+          dangerouslySetInnerHTML={{ __html: marked(post.content || '') as string }}
         />
 
         {/* CTA */}

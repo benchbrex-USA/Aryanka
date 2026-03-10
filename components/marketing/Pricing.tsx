@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Check } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 
 const plans = [
   {
@@ -66,7 +66,29 @@ const plans = [
 
 export default function Pricing() {
   const [annual, setAnnual] = useState(true);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
+
+  const handleProCheckout = async () => {
+    setCheckoutLoading(true);
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: annual ? 'pro_annual' : 'pro_monthly' }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else if (data.redirect) {
+        window.location.href = data.redirect;
+      }
+    } catch {
+      window.location.href = '/login?plan=pro';
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -191,20 +213,25 @@ export default function Pricing() {
               </div>
 
               {/* CTA */}
-              <Link
-                href={plan.href}
-                className={`w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all duration-200 mb-8 block hover:opacity-90 hover:scale-[0.98] ${
-                  plan.popular
-                    ? 'text-[#080808]'
-                    : 'text-white border border-white/[0.1] hover:border-white/[0.2]'
-                }`}
-                style={plan.popular
-                  ? { background: 'linear-gradient(135deg, #00D4FF, #3B82F6)' }
-                  : { background: 'rgba(255,255,255,0.04)' }
-                }
-              >
-                {plan.cta}
-              </Link>
+              {plan.popular ? (
+                <button
+                  onClick={handleProCheckout}
+                  disabled={checkoutLoading}
+                  className="w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all duration-200 mb-8 block hover:opacity-90 hover:scale-[0.98] text-[#080808] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                  style={{ background: 'linear-gradient(135deg, #00D4FF, #3B82F6)' }}
+                >
+                  {checkoutLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  {plan.cta}
+                </button>
+              ) : (
+                <Link
+                  href={plan.href}
+                  className={`w-full py-2.5 rounded-xl text-sm font-semibold text-center transition-all duration-200 mb-8 block hover:opacity-90 hover:scale-[0.98] text-white border border-white/[0.1] hover:border-white/[0.2]`}
+                  style={{ background: 'rgba(255,255,255,0.04)' }}
+                >
+                  {plan.cta}
+                </Link>
+              )}
 
               {/* Features */}
               <ul className="space-y-3 flex-1">

@@ -1,0 +1,44 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0F172A"/>
+      <stop offset="100%" style="stop-color:#0A0F1E"/>
+    </linearGradient>
+    <linearGradient id="brand" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00D4FF"/>
+      <stop offset="100%" style="stop-color:#3B82F6"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <!-- Grid lines -->
+  <g stroke="rgba(255,255,255,0.04)" stroke-width="1">
+    <line x1="0" y1="105" x2="1200" y2="105"/>
+    <line x1="0" y1="210" x2="1200" y2="210"/>
+    <line x1="0" y1="315" x2="1200" y2="315"/>
+    <line x1="0" y1="420" x2="1200" y2="420"/>
+    <line x1="0" y1="525" x2="1200" y2="525"/>
+    <line x1="200" y1="0" x2="200" y2="630"/>
+    <line x1="400" y1="0" x2="400" y2="630"/>
+    <line x1="600" y1="0" x2="600" y2="630"/>
+    <line x1="800" y1="0" x2="800" y2="630"/>
+    <line x1="1000" y1="0" x2="1000" y2="630"/>
+  </g>
+  <!-- Glow orb -->
+  <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" style="stop-color:#00D4FF;stop-opacity:0.08"/>
+    <stop offset="100%" style="stop-color:#00D4FF;stop-opacity:0"/>
+  </radialGradient>
+  <ellipse cx="600" cy="315" rx="500" ry="300" fill="url(#glow)"/>
+  <!-- Logo icon -->
+  <rect x="540" y="175" width="56" height="56" rx="14" fill="url(#brand)"/>
+  <text x="568" y="214" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="900" font-size="32" fill="#080808">A</text>
+  <!-- Title -->
+  <text x="600" y="300" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="700" font-size="64" fill="white">Aryanka</text>
+  <!-- Subtitle -->
+  <text x="600" y="360" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="400" font-size="28" fill="rgba(255,255,255,0.45)">Grow Organically. No Ad Budget Required.</text>
+  <!-- Tag line -->
+  <rect x="460" y="400" width="280" height="48" rx="24" fill="rgba(0,212,255,0.1)" stroke="rgba(0,212,255,0.2)" stroke-width="1"/>
+  <text x="600" y="430" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="600" font-size="18" fill="#00D4FF">Lead Gen · SEO · Email · CRM</text>
+  <!-- URL -->
+  <text x="600" y="565" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="400" font-size="20" fill="rgba(255,255,255,0.2)">aryanka.io</text>
+</svg>

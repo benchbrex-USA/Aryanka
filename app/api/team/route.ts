@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { sendTeamInviteEmail } from '@/lib/resend/email';
 
 const InviteSchema = z.object({
   workspace_id: z.string().uuid(),
@@ -65,10 +66,44 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // TODO: Send invite email via Resend
-  // await sendTeamInviteEmail(parsed.data.email, ws.name, data.invite_token);
+  // Get inviter name
+  const { data: profile } = await admin
+    .from('user_profiles')
+    .select('full_name')
+    .eq('id', user.id)
+    .single();
+  const inviterName = profile?.full_name || user.email || 'A teammate';
+
+  // Send invite email (non-blocking)
+  sendTeamInviteEmail(
+    parsed.data.email,
+    inviterName,
+    ws.name,
+    parsed.data.role,
+    data.invite_token
+  ).catch(console.error);
 
   return NextResponse.json({ member: data, invite_token: data.invite_token }, { status: 201 });
+}
+
+export async function PUT(req: NextRequest) {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const { member_id, role } = await req.json();
+  if (!member_id) return NextResponse.json({ error: 'member_id required' }, { status: 400 });
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('workspace_members')
+    .update({ role })
+    .eq('id', member_id)
+    .select()
+    .single();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ member: data });
 }
 
 export async function DELETE(req: NextRequest) {

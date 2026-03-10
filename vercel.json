@@ -6,5 +6,11 @@
   "regions": ["bom1"],
   "env": {
     "NEXT_PUBLIC_APP_URL": "https://aryanka.io"
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/email-sequences",
+      "schedule": "0 * * * *"
+    }
+  ]
 }

@@ -25,6 +25,9 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { User } from '@supabase/supabase-js';
+import type { WhiteLabelSettings } from '@/lib/white-label';
+import { DEFAULT_BRANDING } from '@/lib/white-label';
+import Image from 'next/image';
 
 const navGroups = [
   {
@@ -69,7 +72,7 @@ const navGroups = [
 // Flatten for isActive checks
 const navItems = navGroups.flatMap((g) => g.items);
 
-export default function Sidebar({ user }: { user: User | null }) {
+export default function Sidebar({ user, branding = DEFAULT_BRANDING }: { user: User | null; branding?: WhiteLabelSettings }) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
@@ -93,10 +96,14 @@ export default function Sidebar({ user }: { user: User | null }) {
       {/* Logo */}
       <div className="p-6 border-b border-white/5">
         <Link href="/dashboard" className="flex items-center gap-2" onClick={() => setMobileOpen(false)}>
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center">
-            <Zap className="w-4 h-4 text-white" />
-          </div>
-          <span className="text-lg font-bold text-white">Aryanka</span>
+          {branding.logo_url ? (
+            <Image src={branding.logo_url} alt={branding.company_name || 'Logo'} width={32} height={32} className="w-8 h-8 rounded-lg object-contain" />
+          ) : (
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center">
+              <Zap className="w-4 h-4 text-white" />
+            </div>
+          )}
+          <span className="text-lg font-bold text-white">{branding.company_name || 'Aryanka'}</span>
         </Link>
       </div>
 

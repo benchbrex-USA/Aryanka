@@ -5,7 +5,7 @@ const siteConfig = {
   description:
     'Aryanka is the all-in-one SaaS platform that automates your lead generation, content distribution, and customer pipeline — so you grow faster without spending on ads.',
   url: process.env.NEXT_PUBLIC_APP_URL || 'https://aryanka.io',
-  ogImage: '/og-image.png',
+  ogImage: '/api/og',
   keywords: [
     'SaaS platform',
     'lead generation',

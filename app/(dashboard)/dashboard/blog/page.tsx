@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { toast } from '@/components/ui/use-toast';
 import {
   Plus, Search, Pencil, Eye, BookOpen, Loader2,
-  Globe, Clock, Tag, ExternalLink,
+  Clock, Tag, ExternalLink, Sparkles,
 } from 'lucide-react';
 
 type Post = {
@@ -27,8 +27,10 @@ type Post = {
 };
 
 type PostForm = { title: string; excerpt: string; content: string; tags: string; status: string; reading_time: string };
+type AiForm = { topic: string; keywords: string; tone: string; length: string };
 
 const EMPTY_FORM: PostForm = { title: '', excerpt: '', content: '', tags: '', status: 'draft', reading_time: '5' };
+const EMPTY_AI_FORM: AiForm = { topic: '', keywords: '', tone: 'professional', length: 'medium' };
 
 const STATUS_VARIANT: Record<string, 'success' | 'warning' | 'secondary'> = {
   published: 'success',
@@ -48,6 +50,9 @@ export default function BlogPage() {
   const [editPost, setEditPost] = useState<Post | null>(null);
   const [form, setForm] = useState<PostForm>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiForm, setAiForm] = useState<AiForm>(EMPTY_AI_FORM);
+  const [aiGenerating, setAiGenerating] = useState(false);
 
   const fetchPosts = async () => {
     setLoading(true);
@@ -67,6 +72,38 @@ export default function BlogPage() {
   useEffect(() => { fetchPosts(); }, []);
 
   const openAdd = () => { setEditPost(null); setForm(EMPTY_FORM); setModalOpen(true); };
+
+  const handleAiGenerate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAiGenerating(true);
+    try {
+      const res = await fetch('/api/blog/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(aiForm),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Generation failed');
+      const { generated } = data;
+      setAiOpen(false);
+      setAiForm(EMPTY_AI_FORM);
+      setEditPost(null);
+      setForm({
+        title: generated.title || '',
+        excerpt: generated.excerpt || '',
+        content: generated.content || '',
+        tags: (generated.tags || []).join(', '),
+        status: 'draft',
+        reading_time: String(generated.reading_time || 5),
+      });
+      setModalOpen(true);
+      toast({ title: 'AI post generated!', description: 'Review and publish when ready.' });
+    } catch (err) {
+      toast({ title: 'Generation failed', description: err instanceof Error ? err.message : 'Try again', variant: 'destructive' });
+    } finally {
+      setAiGenerating(false);
+    }
+  };
   const openEdit = (post: Post) => {
     setEditPost(post);
     setForm({
@@ -130,6 +167,10 @@ export default function BlogPage() {
               <ExternalLink className="w-4 h-4" />
               View Blog
             </a>
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setAiOpen(true)}>
+            <Sparkles className="w-4 h-4 text-brand-400" />
+            AI Generate
           </Button>
           <Button variant="gradient" size="sm" onClick={openAdd}>
             <Plus className="w-4 h-4" />
@@ -241,6 +282,73 @@ export default function BlogPage() {
           </div>
         </div>
       )}
+
+      {/* AI Generate Modal */}
+      <Dialog open={aiOpen} onOpenChange={setAiOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-brand-400" />
+              AI Blog Generator
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAiGenerate} className="space-y-4">
+            <div>
+              <Label>Topic *</Label>
+              <Input
+                value={aiForm.topic}
+                onChange={(e) => setAiForm((f) => ({ ...f, topic: e.target.value }))}
+                placeholder="e.g. How to generate B2B leads without paid ads"
+                required
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label>Target Keywords</Label>
+              <Input
+                value={aiForm.keywords}
+                onChange={(e) => setAiForm((f) => ({ ...f, keywords: e.target.value }))}
+                placeholder="e.g. b2b leads, organic growth, lead generation"
+                className="mt-1"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Tone</Label>
+                <select
+                  value={aiForm.tone}
+                  onChange={(e) => setAiForm((f) => ({ ...f, tone: e.target.value }))}
+                  className="mt-1 w-full bg-navy-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white"
+                >
+                  <option value="professional">Professional</option>
+                  <option value="conversational">Conversational</option>
+                  <option value="educational">Educational</option>
+                  <option value="persuasive">Persuasive</option>
+                </select>
+              </div>
+              <div>
+                <Label>Length</Label>
+                <select
+                  value={aiForm.length}
+                  onChange={(e) => setAiForm((f) => ({ ...f, length: e.target.value }))}
+                  className="mt-1 w-full bg-navy-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white"
+                >
+                  <option value="short">Short (600-800w)</option>
+                  <option value="medium">Medium (900-1200w)</option>
+                  <option value="long">Long (1500-2000w)</option>
+                </select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setAiOpen(false)} disabled={aiGenerating}>Cancel</Button>
+              <Button type="submit" variant="gradient" disabled={aiGenerating}>
+                {aiGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                {aiGenerating ? 'Generating...' : 'Generate Post'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Post Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>

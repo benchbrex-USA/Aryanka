@@ -1,5 +1,14 @@
 import { MetadataRoute } from 'next';
 import { siteConfig } from '@/lib/seo/metadata';
+import { createAdminClient } from '@/lib/supabase/server';
+
+const STATIC_FALLBACK_SLUGS = [
+  'how-to-generate-b2b-leads-without-ads',
+  'organic-traffic-strategies-for-saas',
+  'content-syndication-guide-2024',
+  'linkedin-lead-generation-playbook',
+  'email-nurture-sequences-that-convert',
+];
 
 const staticPages = [
   { url: '', priority: 1.0, changeFrequency: 'weekly' as const },
@@ -11,23 +20,27 @@ const staticPages = [
   { url: '/status', priority: 0.4, changeFrequency: 'daily' as const },
 ];
 
-// In production, fetch blog slugs from Supabase
-const getBlogSlugs = async (): Promise<string[]> => {
-  return [
-    'how-to-generate-b2b-leads-without-ads',
-    'organic-traffic-strategies-for-saas',
-    'content-syndication-guide-2024',
-    'linkedin-lead-generation-playbook',
-    'email-nurture-sequences-that-convert',
-  ];
+const getBlogSlugs = async (): Promise<{ slug: string; updated_at?: string }[]> => {
+  try {
+    const supabase = createAdminClient();
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .select('slug, updated_at')
+      .eq('status', 'published')
+      .order('updated_at', { ascending: false });
+    if (!error && data && data.length > 0) return data;
+  } catch {
+    // fall through to static
+  }
+  return STATIC_FALLBACK_SLUGS.map((slug) => ({ slug }));
 };
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const blogSlugs = await getBlogSlugs();
+  const blogEntries = await getBlogSlugs();
 
-  const blogPages = blogSlugs.map((slug) => ({
+  const blogPages = blogEntries.map(({ slug, updated_at }) => ({
     url: `${siteConfig.url}/blog/${slug}`,
-    lastModified: new Date(),
+    lastModified: updated_at ? new Date(updated_at) : new Date(),
     changeFrequency: 'weekly' as const,
     priority: 0.7,
   }));

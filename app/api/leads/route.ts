@@ -93,8 +93,48 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const status = searchParams.get('status');
   const source = searchParams.get('source');
+  const format = searchParams.get('format');
   const page = parseInt(searchParams.get('page') || '1');
   const limit = parseInt(searchParams.get('limit') || '50');
+
+  // CSV export — fetch all leads (no pagination)
+  if (format === 'csv') {
+    let csvQuery = supabase
+      .from('leads')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (status) csvQuery = csvQuery.eq('status', status);
+    if (source) csvQuery = csvQuery.eq('source', source);
+
+    const { data, error } = await csvQuery;
+    if (error) return NextResponse.json({ error: 'Failed to fetch leads' }, { status: 500 });
+
+    const rows: string[] = [
+      ['Name', 'Email', 'Company', 'Phone', 'Source', 'Status', 'Score', 'UTM Source', 'UTM Medium', 'UTM Campaign', 'Date'].join(','),
+    ];
+    for (const l of data || []) {
+      rows.push([
+        l.name || '',
+        l.email,
+        l.company || '',
+        l.phone || '',
+        l.source || '',
+        l.status || '',
+        String(l.score || 0),
+        l.utm_source || '',
+        l.utm_medium || '',
+        l.utm_campaign || '',
+        l.created_at ? l.created_at.split('T')[0] : '',
+      ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','));
+    }
+
+    return new NextResponse(rows.join('\n'), {
+      headers: {
+        'Content-Type': 'text/csv',
+        'Content-Disposition': 'attachment; filename="aryanka-leads.csv"',
+      },
+    });
+  }
 
   let query = supabase
     .from('leads')

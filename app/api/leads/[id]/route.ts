@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/server';
+import { createAdminClient, createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { canWrite } from '@/lib/auth/roles';
 
 const UpdateSchema = z.object({
   email: z.string().email().optional(),
@@ -19,6 +20,13 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const supabaseUser = createClient();
+    const { data: { user } } = await supabaseUser.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!await canWrite(supabaseUser, user.id)) {
+      return NextResponse.json({ error: 'Forbidden: viewer role cannot modify leads' }, { status: 403 });
+    }
+
     const body = await req.json();
     const parsed = UpdateSchema.safeParse(body);
 
@@ -52,6 +60,13 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const supabaseUser = createClient();
+    const { data: { user } } = await supabaseUser.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!await canWrite(supabaseUser, user.id)) {
+      return NextResponse.json({ error: 'Forbidden: viewer role cannot delete leads' }, { status: 403 });
+    }
+
     const supabase = createAdminClient();
     const { error } = await supabase
       .from('leads')

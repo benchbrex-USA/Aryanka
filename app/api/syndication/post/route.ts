@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { postToPlatform, type PostContent } from '@/lib/platforms/posting';
 import type { Platform } from '@/lib/platforms/oauth';
+import { refreshAccessToken } from '@/lib/platforms/token-refresh';
 
 export async function POST(req: NextRequest) {
   const supabase = createClient();
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
   // Fetch the user's access token for this platform
   const { data: connection, error: connErr } = await admin
     .from('connected_platforms')
-    .select('access_token, platform_user_id, platform_username, token_expires_at')
+    .select('access_token, refresh_token, platform_user_id, platform_username, token_expires_at')
     .eq('user_id', user.id)
     .eq('platform', platform)
     .eq('is_active', true)
@@ -51,18 +52,44 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Check token expiry (warn only — refresh not implemented here for simplicity)
+  // Auto-refresh expired token if refresh_token is available
+  let accessToken = connection.access_token;
   if (connection.token_expires_at && new Date(connection.token_expires_at) < new Date()) {
-    return NextResponse.json(
-      { error: `Your ${platform} token has expired. Please reconnect your account.` },
-      { status: 401 }
-    );
+    if (connection.refresh_token) {
+      try {
+        const refreshed = await refreshAccessToken(platform as Platform, connection.refresh_token);
+        accessToken = refreshed.access_token;
+        const newExpiry = refreshed.expires_in
+          ? new Date(Date.now() + refreshed.expires_in * 1000).toISOString()
+          : null;
+        await admin
+          .from('connected_platforms')
+          .update({
+            access_token: refreshed.access_token,
+            ...(refreshed.refresh_token ? { refresh_token: refreshed.refresh_token } : {}),
+            ...(newExpiry ? { token_expires_at: newExpiry } : {}),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('user_id', user.id)
+          .eq('platform', platform);
+      } catch {
+        return NextResponse.json(
+          { error: `Your ${platform} token has expired. Please reconnect your account.` },
+          { status: 401 }
+        );
+      }
+    } else {
+      return NextResponse.json(
+        { error: `Your ${platform} token has expired. Please reconnect your account.` },
+        { status: 401 }
+      );
+    }
   }
 
   const content: PostContent = { title, body, url, imageUrl: image_url, subreddit };
 
   // Post to platform
-  const result = await postToPlatform(platform, connection.access_token, connection.platform_user_id || '', content);
+  const result = await postToPlatform(platform, accessToken, connection.platform_user_id || '', content);
 
   // Log to platform_posts table
   const { data: postRecord } = await admin

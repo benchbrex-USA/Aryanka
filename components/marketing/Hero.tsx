@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, TrendingUp, Users, Zap } from 'lucide-react';
 
@@ -10,8 +10,24 @@ const stats = [
   { value: '0₹', label: 'Ad spend required', icon: Zap },
 ];
 
+interface ABConfig { cta_text?: string; cta_href?: string }
+
 export default function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
+  const [abVariant, setAbVariant] = useState<{ test_id: string; variant: 'a' | 'b'; config: ABConfig } | null>(null);
+
+  useEffect(() => {
+    // Fetch A/B variant for the primary CTA
+    fetch('/api/ab-tests/variant?page=/&element=cta_button')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.test_id) setAbVariant(data);
+      })
+      .catch(() => {}); // silently fail — show default CTA
+  }, []);
+
+  const ctaText = abVariant?.config?.cta_text || 'Sign up free';
+  const ctaHref = abVariant?.config?.cta_href || '/login';
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -83,11 +99,17 @@ export default function Hero() {
         {/* CTA buttons */}
         <div className="reveal reveal-delay-3 flex flex-col sm:flex-row items-center justify-center gap-3 mb-16">
           <Link
-            href="/login"
+            href={ctaHref}
             className="group flex items-center gap-2 px-7 py-3.5 rounded-xl text-sm font-semibold text-[#080808] transition-all duration-200 hover:opacity-90 hover:scale-[0.98]"
             style={{ background: 'linear-gradient(135deg, #00D4FF, #3B82F6)' }}
+            onClick={() => {
+              // Track conversion for A/B test
+              if (abVariant?.test_id) {
+                void fetch(`/api/ab-tests?id=${abVariant.test_id}&variant=${abVariant.variant}&action=conversion`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: abVariant.test_id, action: 'conversion', variant: abVariant.variant }) });
+              }
+            }}
           >
-            Sign up free
+            {ctaText}
             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
           </Link>
           <Link
