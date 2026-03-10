@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { sendWelcomeEmail } from '@/lib/resend/email';
 import { z } from 'zod';
+import { enrollLeadInSequence } from '@/lib/sequence';
+import { notifyAllAdmins } from '@/lib/notifications';
+import { sendSlackNotification, slackLeadMessage } from '@/lib/slack';
 
 const LeadSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -78,8 +81,25 @@ export async function POST(req: NextRequest) {
       metadata: { type: data.type },
     });
 
+    // Enroll in email nurture sequence immediately (first email in 15 min)
+    void enrollLeadInSequence(supabase, lead.id, data.email);
+
     // Send welcome email (non-blocking)
     sendWelcomeEmail(data.email, data.name).catch(console.error);
+
+    // In-app notification for all admins
+    void notifyAllAdmins({
+      type: 'new_lead',
+      title: 'New lead captured',
+      body: `${data.name || data.email}${data.company ? ` from ${data.company}` : ''} signed up via ${data.source}`,
+      link: '/dashboard/leads',
+      metadata: { lead_id: lead.id, source: data.source, score: lead.score },
+    });
+
+    // Slack notification (non-blocking)
+    void sendSlackNotification(
+      slackLeadMessage(data.email, data.name, data.company, data.source, lead.score as number)
+    );
 
     return NextResponse.json({ success: true, lead: { id: lead.id } }, { status: 201 });
   } catch (error) {

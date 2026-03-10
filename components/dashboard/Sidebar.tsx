@@ -22,6 +22,7 @@ import {
   FlaskConical,
   FormInput,
   Receipt,
+  Gift,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { User } from '@supabase/supabase-js';
@@ -64,6 +65,7 @@ const navGroups = [
       { icon: Globe, label: 'Workspaces', href: '/dashboard/workspaces' },
       { icon: UserPlus, label: 'Team', href: '/dashboard/team' },
       { icon: Receipt, label: 'Billing', href: '/dashboard/billing' },
+      { icon: Gift, label: 'Referrals', href: '/dashboard/referrals' },
       { icon: Settings, label: 'Settings', href: '/dashboard/settings' },
     ],
   },

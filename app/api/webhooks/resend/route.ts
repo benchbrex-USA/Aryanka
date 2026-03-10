@@ -55,7 +55,6 @@ export async function POST(req: NextRequest) {
     case 'email.opened': {
       const campaignId = await findCampaign();
       if (campaignId) {
-        // Increment opened_count
         const { data: campaign } = await admin
           .from('email_campaigns')
           .select('opened_count')
@@ -66,8 +65,19 @@ export async function POST(req: NextRequest) {
           .update({ opened_count: ((campaign?.opened_count as number) || 0) + 1 })
           .eq('id', campaignId);
       }
-      // Record the open event
       if (toEmail) {
+        // Update lead score (+5 for open) and email_opens counter
+        const { data: leadRow } = await admin
+          .from('leads')
+          .select('id, score, email_opens')
+          .eq('email', toEmail)
+          .single();
+        if (leadRow) {
+          await admin.from('leads').update({
+            email_opens: ((leadRow.email_opens as number) || 0) + 1,
+            score: Math.min(((leadRow.score as number) || 0) + 5, 100),
+          }).eq('id', leadRow.id);
+        }
         void admin.from('email_events').insert({
           campaign_id: campaignId,
           event_type: 'opened',
@@ -92,6 +102,19 @@ export async function POST(req: NextRequest) {
           .eq('id', campaignId);
       }
       if (toEmail) {
+        // Update lead score (+10 for click) + status to 'contacted'
+        const { data: leadRow } = await admin
+          .from('leads')
+          .select('id, score, email_clicks, status')
+          .eq('email', toEmail)
+          .single();
+        if (leadRow) {
+          await admin.from('leads').update({
+            email_clicks: ((leadRow.email_clicks as number) || 0) + 1,
+            score: Math.min(((leadRow.score as number) || 0) + 10, 100),
+            status: leadRow.status === 'new' ? 'contacted' : leadRow.status,
+          }).eq('id', leadRow.id);
+        }
         void admin.from('email_events').insert({
           campaign_id: campaignId,
           event_type: 'clicked',

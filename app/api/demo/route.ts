@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { sendDemoConfirmationEmail } from '@/lib/resend/email';
 import { z } from 'zod';
+import { enrollLeadInSequence } from '@/lib/sequence';
+import { notifyAllAdmins } from '@/lib/notifications';
+import { sendSlackNotification, slackDemoMessage } from '@/lib/slack';
 
 const DemoSchema = z.object({
   name: z.string().min(2, 'Name is required'),
@@ -54,7 +57,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Also upsert as a high-value lead
-    await supabase.from('leads').upsert(
+    const { data: lead } = await supabase.from('leads').upsert(
       {
         email: data.email,
         name: data.name,
@@ -66,13 +69,28 @@ export async function POST(req: NextRequest) {
         score: 85,
       },
       { onConflict: 'email' }
-    );
+    ).select().single();
+
+    // Enroll in email sequence immediately
+    if (lead) void enrollLeadInSequence(supabase, lead.id, data.email);
 
     // Track analytics
     await supabase.from('analytics_events').insert({
       event_type: 'demo_booked',
       metadata: { company: data.company, role: data.role },
     });
+
+    // In-app notification for all admins
+    void notifyAllAdmins({
+      type: 'demo_booked',
+      title: 'Demo booked!',
+      body: `${data.name} from ${data.company} booked a demo`,
+      link: '/dashboard',
+      metadata: { email: data.email, company: data.company },
+    });
+
+    // Slack notification
+    void sendSlackNotification(slackDemoMessage(data.name, data.company, data.email));
 
     // Send confirmation email
     sendDemoConfirmationEmail(

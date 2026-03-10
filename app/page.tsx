@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import Navbar from '@/components/marketing/Navbar';
 import Hero from '@/components/marketing/Hero';
 import SocialProof from '@/components/marketing/SocialProof';
@@ -10,10 +11,15 @@ import FAQ from '@/components/marketing/FAQ';
 import FinalCTA from '@/components/marketing/FinalCTA';
 import Footer from '@/components/marketing/Footer';
 import ExitIntentPopup from '@/components/marketing/ExitIntentPopup';
+import VisitorTracker from '@/components/marketing/VisitorTracker';
 
 export default function HomePage() {
   return (
     <main className="min-h-screen" style={{ background: '#080808' }}>
+      {/* Visitor tracking — logs page views, UTM, device, referrer */}
+      <Suspense fallback={null}>
+        <VisitorTracker />
+      </Suspense>
       <Navbar />
       <Hero />
       <SocialProof />

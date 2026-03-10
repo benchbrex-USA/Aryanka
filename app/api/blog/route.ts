@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { notifyAllAdmins } from '@/lib/notifications';
 
 const PostSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -69,11 +70,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Track analytics (fire and forget, errors ignored)
+    // Track analytics (fire and forget)
     void supabase.from('analytics_events').insert({
       event_type: 'blog_post_created',
       metadata: { slug: data.slug, status: data.status },
     });
+
+    // Notify team when published
+    if (data.status === 'published') {
+      void notifyAllAdmins({
+        type: 'blog_published',
+        title: 'Blog post published',
+        body: `"${data.title}" is now live`,
+        link: `/blog/${data.slug}`,
+        metadata: { slug: data.slug },
+      });
+    }
 
     return NextResponse.json({ success: true, post: data }, { status: 201 });
   } catch {
