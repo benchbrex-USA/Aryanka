@@ -27,11 +27,7 @@ import {
   GitBranch,
   Filter,
   Rss,
-  Inbox,
-  Radio,
-  Sparkles,
   Lightbulb,
-  Link2,
   TrendingUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -60,7 +56,6 @@ const navGroups = [
     label: 'Outreach',
     items: [
       { icon: GitBranch, label: 'Sequences', href: '/dashboard/sequences' },
-      { icon: Inbox, label: 'AI Inbox', href: '/dashboard/inbox' },
       { icon: Mail, label: 'Email', href: '/dashboard/email' },
       { icon: Rss, label: 'Subscribers', href: '/dashboard/subscribers' },
     ],
@@ -79,7 +74,6 @@ const navGroups = [
     items: [
       { icon: BarChart3, label: 'Analytics', href: '/dashboard/analytics' },
       { icon: TrendingUp, label: 'Attribution', href: '/dashboard/analytics/attribution' },
-      { icon: Radio, label: 'Social Listening', href: '/dashboard/listening' },
       { icon: BookOpen, label: 'Blog & SEO', href: '/dashboard/blog' },
     ],
   },
@@ -90,7 +84,6 @@ const navGroups = [
       { icon: UserPlus, label: 'Team', href: '/dashboard/team' },
       { icon: Receipt, label: 'Billing', href: '/dashboard/billing' },
       { icon: Gift, label: 'Referrals', href: '/dashboard/referrals' },
-      { icon: Link2, label: 'Agency Portal', href: '/dashboard/settings/agency' },
       { icon: Settings, label: 'Settings', href: '/dashboard/settings' },
     ],
   },

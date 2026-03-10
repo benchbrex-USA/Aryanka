@@ -88,6 +88,10 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const supabaseUser = createClient();
+    const { data: { user } } = await supabaseUser.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const supabase = createAdminClient();
     const { data, error } = await supabase
       .from('leads')
