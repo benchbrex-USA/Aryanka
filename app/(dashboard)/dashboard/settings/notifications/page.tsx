@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -34,14 +34,50 @@ export default function NotificationsSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  useEffect(() => {
+    fetch('/api/settings').then((r) => r.json()).then((data) => {
+      if (data.profile) {
+        setEmailPrefs({
+          new_lead: data.profile.notify_new_lead ?? true,
+          hot_lead: data.profile.notify_high_score ?? true,
+          campaign_sent: false,
+          campaign_reply: true,
+          weekly_digest: data.profile.notify_weekly_report ?? true,
+        });
+        setSlackWebhook(data.profile.slack_webhook_url || '');
+      }
+    }).catch(() => {});
+  }, []);
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 800));
+    const [notifRes, integRes] = await Promise.all([
+      fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'notifications',
+          new_lead: emailPrefs.new_lead,
+          demo_booked: true,
+          weekly_report: emailPrefs.weekly_digest,
+          lead_score_high: emailPrefs.hot_lead,
+        }),
+      }),
+      slackWebhook ? fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'integrations', slack_webhook_url: slackWebhook }),
+      }) : Promise.resolve({ ok: true }),
+    ]);
     setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-    toast({ title: 'Notification preferences saved!' });
+    if (notifRes.ok) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+      toast({ title: 'Notification preferences saved!' });
+    } else {
+      toast({ title: 'Save failed', variant: 'destructive' });
+    }
   };
 
   return (

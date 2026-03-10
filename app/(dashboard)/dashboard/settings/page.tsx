@@ -11,14 +11,16 @@ import {
   User, Lock, Bell, Loader2,
   CheckCircle, Paintbrush, Webhook,
   Shield, Mail, ExternalLink, Send,
+  Share2, Linkedin, Twitter, Globe, Youtube, Instagram, Link2Off, Zap,
 } from 'lucide-react';
 
-type Tab = 'profile' | 'security' | 'notifications' | 'white-label' | 'integrations' | 'sso' | 'email-domain';
+type Tab = 'profile' | 'security' | 'notifications' | 'white-label' | 'integrations' | 'platforms' | 'sso' | 'email-domain';
 
 const TABS: { id: Tab; label: string; icon: typeof User }[] = [
   { id: 'profile', label: 'Profile', icon: User },
   { id: 'security', label: 'Security', icon: Lock },
   { id: 'notifications', label: 'Notifications', icon: Bell },
+  { id: 'platforms', label: 'Platforms', icon: Share2 },
   { id: 'white-label', label: 'White Label', icon: Paintbrush },
   { id: 'integrations', label: 'Integrations', icon: Webhook },
   { id: 'sso', label: 'SSO / SAML', icon: Shield },
@@ -40,8 +42,17 @@ export default function SettingsPage() {
   });
   const [integrations, setIntegrations] = useState({ slack_webhook_url: '' });
   const [emailDomain, setEmailDomain] = useState({ custom_email_domain: '' });
+  const [connectedPlatforms, setConnectedPlatforms] = useState<Array<{ platform: string; platform_display_name: string; platform_username: string; connected_at: string }>>([]);
   const [saving, setSaving] = useState(false);
   const supabase = createClient();
+
+  const PLATFORM_META: Record<string, { label: string; icon: React.ElementType; color: string }> = {
+    linkedin: { label: 'LinkedIn', icon: Linkedin, color: 'text-blue-400' },
+    twitter: { label: 'Twitter / X', icon: Twitter, color: 'text-sky-400' },
+    reddit: { label: 'Reddit', icon: Globe, color: 'text-orange-400' },
+    youtube: { label: 'YouTube', icon: Youtube, color: 'text-red-400' },
+    instagram: { label: 'Instagram', icon: Instagram, color: 'text-pink-400' },
+  };
 
   const load = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -52,6 +63,10 @@ export default function SettingsPage() {
         bio: user.user_metadata?.bio || '',
       });
     }
+    // Fetch platforms in parallel
+    fetch('/api/platforms/status').then((r) => r.json()).then((d) => {
+      setConnectedPlatforms(d.platforms || []);
+    }).catch(() => {});
     const res = await fetch('/api/settings');
     if (res.ok) {
       const data = await res.json();
@@ -316,7 +331,44 @@ export default function SettingsPage() {
             <form onSubmit={(e) => { e.preventDefault(); save('integrations', integrations); }} className="space-y-6">
               <div>
                 <h2 className="text-lg font-semibold text-white mb-1">Integrations</h2>
-                <p className="text-sm text-navy-400">Connect Slack and custom webhooks for real-time notifications.</p>
+                <p className="text-sm text-navy-400">Connect Slack and configure required API keys.</p>
+              </div>
+
+              {/* Required ENV vars */}
+              <div className="p-4 rounded-xl border border-yellow-500/20 bg-yellow-500/5 space-y-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Zap className="w-4 h-4 text-yellow-400" />
+                  <span className="text-sm font-semibold text-white">Required API Keys (Environment Variables)</span>
+                </div>
+                <p className="text-xs text-navy-400">These are set in your <code className="text-yellow-400">.env.local</code> file or Vercel environment variables, not stored in the database.</p>
+                <div className="space-y-2">
+                  {[
+                    { key: 'RESEND_API_KEY', label: 'Resend', desc: 'Email delivery — required for campaigns and sequences', url: 'https://resend.com/api-keys' },
+                    { key: 'ANTHROPIC_API_KEY', label: 'Anthropic', desc: 'AI content generation — required for blog AI and post optimization', url: 'https://console.anthropic.com/settings/keys' },
+                    { key: 'HUNTER_API_KEY', label: 'Hunter.io', desc: 'Email verification in lead enrichment — optional', url: 'https://hunter.io/api-keys' },
+                  ].map((item) => (
+                    <div key={item.key} className="flex items-start justify-between gap-3 p-2.5 rounded-lg bg-black/20">
+                      <div>
+                        <code className="text-xs text-yellow-400">{item.key}</code>
+                        <div className="text-xs text-navy-500 mt-0.5">{item.label} — {item.desc}</div>
+                      </div>
+                      <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-400 hover:underline flex items-center gap-1 flex-shrink-0">
+                        Get key <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Lead Scoring shortcut */}
+              <div className="flex items-center justify-between p-4 rounded-xl border border-white/[0.06] bg-white/[0.02]">
+                <div>
+                  <div className="text-sm font-medium text-white">Lead Scoring Rules</div>
+                  <div className="text-xs text-navy-400 mt-0.5">Configure which events add or subtract from lead scores</div>
+                </div>
+                <a href="/dashboard/settings/scoring" className="text-xs text-brand-400 hover:underline flex items-center gap-1">
+                  Configure <ExternalLink className="w-3 h-3" />
+                </a>
               </div>
 
               {/* Slack */}
@@ -352,6 +404,60 @@ export default function SettingsPage() {
                 Save Integrations
               </Button>
             </form>
+          )}
+
+          {/* Platforms */}
+          {tab === 'platforms' && (
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-lg font-semibold text-white mb-1">Connected Platforms</h2>
+                <p className="text-sm text-navy-400">Connect your social accounts to enable one-click content syndication.</p>
+              </div>
+              <div className="space-y-3">
+                {(['linkedin', 'twitter', 'reddit', 'youtube', 'instagram'] as const).map((p) => {
+                  const meta = PLATFORM_META[p];
+                  const Icon = meta.icon;
+                  const connected = connectedPlatforms.find((cp) => cp.platform === p);
+                  return (
+                    <div key={p} className="flex items-center justify-between p-4 rounded-xl border border-white/[0.06] bg-white/[0.02]">
+                      <div className="flex items-center gap-3">
+                        <Icon className={`w-5 h-5 ${meta.color}`} />
+                        <div>
+                          <div className="text-sm font-medium text-white">{meta.label}</div>
+                          {connected ? (
+                            <div className="text-xs text-green-400">@{connected.platform_username} · Connected {new Date(connected.connected_at).toLocaleDateString()}</div>
+                          ) : (
+                            <div className="text-xs text-navy-500">Not connected</div>
+                          )}
+                        </div>
+                      </div>
+                      {connected ? (
+                        <button
+                          onClick={async () => {
+                            await fetch('/api/platforms/disconnect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ platform: p }) });
+                            setConnectedPlatforms((prev) => prev.filter((cp) => cp.platform !== p));
+                            toast({ title: `${meta.label} disconnected` });
+                          }}
+                          className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300 px-3 py-1.5 rounded-lg border border-red-500/20 hover:bg-red-500/5 transition-colors"
+                        >
+                          <Link2Off className="w-3.5 h-3.5" /> Disconnect
+                        </button>
+                      ) : (
+                        <a
+                          href={`/api/platforms/connect/${p}`}
+                          className="flex items-center gap-1.5 text-xs text-brand-400 hover:text-brand-300 px-3 py-1.5 rounded-lg border border-brand-500/20 hover:bg-brand-500/5 transition-colors"
+                        >
+                          Connect
+                        </a>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="p-3 rounded-xl border border-brand-500/20 bg-brand-500/5 text-xs text-navy-400">
+                Connected platforms are used for automatic syndication. You can also manage connections from the <a href="/dashboard/content" className="text-brand-400 hover:underline">Syndication page</a>.
+              </div>
+            </div>
           )}
 
           {/* SSO */}
