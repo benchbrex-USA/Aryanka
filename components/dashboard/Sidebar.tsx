@@ -29,6 +29,7 @@ import {
   Rss,
   Lightbulb,
   TrendingUp,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { User } from '@supabase/supabase-js';
@@ -46,56 +47,59 @@ const navGroups = [
   {
     label: 'Capture',
     items: [
-      { icon: Users, label: 'Leads & CRM', href: '/dashboard/leads' },
-      { icon: Kanban, label: 'Pipeline', href: '/dashboard/pipeline' },
-      { icon: FormInput, label: 'Forms', href: '/dashboard/forms' },
-      { icon: Filter, label: 'Segments', href: '/dashboard/segments' },
+      { icon: Users,     label: 'Leads & CRM', href: '/dashboard/leads' },
+      { icon: Kanban,    label: 'Pipeline',     href: '/dashboard/pipeline' },
+      { icon: FormInput, label: 'Forms',        href: '/dashboard/forms' },
+      { icon: Filter,    label: 'Segments',     href: '/dashboard/segments' },
     ],
   },
   {
     label: 'Outreach',
     items: [
-      { icon: GitBranch, label: 'Sequences', href: '/dashboard/sequences' },
-      { icon: Mail, label: 'Email', href: '/dashboard/email' },
-      { icon: Rss, label: 'Subscribers', href: '/dashboard/subscribers' },
+      { icon: GitBranch, label: 'Sequences',   href: '/dashboard/sequences' },
+      { icon: Mail,      label: 'Email',        href: '/dashboard/email' },
+      { icon: Rss,       label: 'Subscribers',  href: '/dashboard/subscribers' },
     ],
   },
   {
     label: 'Content',
     items: [
-      { icon: Share2, label: 'Syndication', href: '/dashboard/content' },
-      { icon: Calendar, label: 'Calendar', href: '/dashboard/calendar' },
-      { icon: Lightbulb, label: 'Inspiration', href: '/dashboard/inspiration' },
-      { icon: FlaskConical, label: 'A/B Tests', href: '/dashboard/ab-tests' },
+      { icon: Share2,       label: 'Syndication', href: '/dashboard/content' },
+      { icon: Calendar,     label: 'Calendar',    href: '/dashboard/calendar' },
+      { icon: Lightbulb,    label: 'Inspiration', href: '/dashboard/inspiration' },
+      { icon: FlaskConical, label: 'A/B Tests',   href: '/dashboard/ab-tests' },
     ],
   },
   {
     label: 'Insights',
     items: [
-      { icon: BarChart3, label: 'Analytics', href: '/dashboard/analytics' },
-      { icon: TrendingUp, label: 'Attribution', href: '/dashboard/analytics/attribution' },
-      { icon: BookOpen, label: 'Blog & SEO', href: '/dashboard/blog' },
+      { icon: BarChart3,   label: 'Analytics',   href: '/dashboard/analytics' },
+      { icon: TrendingUp,  label: 'Attribution', href: '/dashboard/analytics/attribution' },
+      { icon: BookOpen,    label: 'Blog & SEO',  href: '/dashboard/blog' },
     ],
   },
   {
     label: 'Account',
     items: [
-      { icon: Globe, label: 'Workspaces', href: '/dashboard/workspaces' },
-      { icon: UserPlus, label: 'Team', href: '/dashboard/team' },
-      { icon: Receipt, label: 'Billing', href: '/dashboard/billing' },
-      { icon: Gift, label: 'Referrals', href: '/dashboard/referrals' },
-      { icon: Settings, label: 'Settings', href: '/dashboard/settings' },
+      { icon: Globe,    label: 'Workspaces', href: '/dashboard/workspaces' },
+      { icon: UserPlus, label: 'Team',       href: '/dashboard/team' },
+      { icon: Receipt,  label: 'Billing',    href: '/dashboard/billing' },
+      { icon: Gift,     label: 'Referrals',  href: '/dashboard/referrals' },
+      { icon: Settings, label: 'Settings',   href: '/dashboard/settings' },
     ],
   },
 ];
 
-// Flatten for isActive checks
-const navItems = navGroups.flatMap((g) => g.items);
-
-export default function Sidebar({ user, branding = DEFAULT_BRANDING }: { user: User | null; branding?: WhiteLabelSettings }) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const supabase = createClient();
+export default function Sidebar({
+  user,
+  branding = DEFAULT_BRANDING,
+}: {
+  user: User | null;
+  branding?: WhiteLabelSettings;
+}) {
+  const pathname  = usePathname();
+  const router    = useRouter();
+  const supabase  = createClient();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleSignOut = async () => {
@@ -107,98 +111,129 @@ export default function Sidebar({ user, branding = DEFAULT_BRANDING }: { user: U
   const isActive = (href: string) =>
     href === '/dashboard' ? pathname === href : pathname.startsWith(href);
 
-  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Admin';
+  const displayName  = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Admin';
   const displayEmail = user?.email || 'admin@aryanka.io';
-  const initials = displayName.slice(0, 2).toUpperCase();
+  const initials     = displayName.slice(0, 2).toUpperCase();
 
   const NavContent = () => (
-    <>
-      {/* Logo */}
-      <div className="p-6 border-b border-white/5">
-        <Link href="/dashboard" className="flex items-center gap-2" onClick={() => setMobileOpen(false)}>
+    <div className="flex flex-col h-full">
+      {/* ── Logo ─────────────────────────────────────────── */}
+      <div className="h-14 flex items-center px-4 border-b border-white/[0.06] flex-shrink-0">
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-2.5 group"
+          onClick={() => setMobileOpen(false)}
+        >
           {branding.logo_url ? (
-            <Image src={branding.logo_url} alt={branding.company_name || 'Logo'} width={32} height={32} className="w-8 h-8 rounded-lg object-contain" />
+            <Image
+              src={branding.logo_url}
+              alt={branding.company_name || 'Logo'}
+              width={28}
+              height={28}
+              className="w-7 h-7 rounded-lg object-contain"
+            />
           ) : (
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center">
-              <Zap className="w-4 h-4 text-white" />
+            <div className="w-7 h-7 rounded-lg bg-brand-500 flex items-center justify-center flex-shrink-0 shadow-[0_0_0_1px_rgba(255,255,255,0.1)_inset]">
+              <Zap className="w-3.5 h-3.5 text-white" />
             </div>
           )}
-          <span className="text-lg font-bold text-white">{branding.company_name || 'Aryanka'}</span>
+          <span className="text-sm font-semibold text-[#ededed] tracking-tight">
+            {branding.company_name || 'Aryanka'}
+          </span>
         </Link>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 p-3 overflow-y-auto space-y-3">
+      {/* ── Navigation ───────────────────────────────────── */}
+      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
         {navGroups.map((group, gi) => (
           <div key={gi}>
             {group.label && (
-              <div className="px-3 pt-1 pb-1 text-xs font-semibold text-navy-600 uppercase tracking-wider">{group.label}</div>
+              <div className="px-2 pb-1 pt-1">
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-[#444]">
+                  {group.label}
+                </span>
+              </div>
             )}
             <div className="space-y-0.5">
-              {group.items.map(({ icon: Icon, label, href }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  onClick={() => setMobileOpen(false)}
-                  className={cn(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
-                    isActive(href)
-                      ? 'bg-brand-500/20 text-brand-400 border border-brand-500/20'
-                      : 'text-navy-400 hover:text-white hover:bg-white/5'
-                  )}
-                >
-                  <Icon className={cn('w-4 h-4', isActive(href) ? 'text-brand-400' : 'text-current')} />
-                  {label}
-                  {isActive(href) && (
-                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-400" />
-                  )}
-                </Link>
-              ))}
+              {group.items.map(({ icon: Icon, label, href }) => {
+                const active = isActive(href);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={() => setMobileOpen(false)}
+                    className={cn(
+                      'group flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-[13px] font-medium transition-all duration-150',
+                      active
+                        ? 'bg-brand-500/[0.12] text-brand-400'
+                        : 'text-[#777] hover:text-[#ededed] hover:bg-white/[0.05]'
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        'w-4 h-4 shrink-0 transition-colors duration-150',
+                        active ? 'text-brand-400' : 'text-[#555] group-hover:text-[#888]'
+                      )}
+                    />
+                    <span className="flex-1 truncate">{label}</span>
+                    {active && (
+                      <ChevronRight className="w-3 h-3 text-brand-500/60 shrink-0" />
+                    )}
+                  </Link>
+                );
+              })}
             </div>
           </div>
         ))}
       </nav>
 
-      {/* User / Logout */}
-      <div className="p-4 border-t border-white/5">
+      {/* ── User footer ──────────────────────────────────── */}
+      <div className="flex-shrink-0 border-t border-white/[0.06] p-2">
         <Link
           href="/dashboard/settings"
           onClick={() => setMobileOpen(false)}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 group cursor-pointer transition-colors mb-1"
+          className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-white/[0.05] transition-colors duration-150 group"
         >
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0">
             {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium text-white truncate">{displayName}</div>
-            <div className="text-xs text-navy-500 truncate">{displayEmail}</div>
+            <div className="text-[13px] font-medium text-[#ededed] truncate leading-tight">
+              {displayName}
+            </div>
+            <div className="text-[11px] text-[#555] truncate leading-tight">
+              {displayEmail}
+            </div>
           </div>
+          <Settings className="w-3.5 h-3.5 text-[#444] group-hover:text-[#777] transition-colors shrink-0" />
         </Link>
+
         <button
           onClick={handleSignOut}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-navy-500 hover:text-red-400 hover:bg-red-500/5 transition-colors text-sm"
+          className="mt-1 w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-[13px] text-[#555] hover:text-red-400 hover:bg-red-500/[0.06] transition-all duration-150"
         >
-          <LogOut className="w-4 h-4" />
+          <LogOut className="w-4 h-4 shrink-0" />
           Sign out
         </button>
       </div>
-    </>
+    </div>
   );
 
   return (
     <>
       {/* Mobile hamburger */}
       <button
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-navy-800 border border-white/10 text-white"
+        className="lg:hidden fixed top-3.5 left-3.5 z-50 p-2 rounded-lg bg-[#111] border border-white/[0.08] text-[#ededed] hover:bg-[#1a1a1a] transition-colors"
         onClick={() => setMobileOpen(!mobileOpen)}
+        aria-label="Toggle menu"
       >
-        {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
       </button>
 
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+          className="lg:hidden fixed inset-0 z-40 bg-black/70 backdrop-blur-sm"
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -206,7 +241,9 @@ export default function Sidebar({ user, branding = DEFAULT_BRANDING }: { user: U
       {/* Mobile sidebar */}
       <aside
         className={cn(
-          'lg:hidden fixed left-0 top-0 bottom-0 z-50 w-64 bg-navy-950 border-r border-white/5 flex flex-col transition-transform duration-300',
+          'lg:hidden fixed left-0 top-0 bottom-0 z-50 w-[220px]',
+          'bg-[#0a0a0a] border-r border-white/[0.06] flex flex-col',
+          'transition-transform duration-300 ease-out will-change-transform',
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
@@ -214,7 +251,7 @@ export default function Sidebar({ user, branding = DEFAULT_BRANDING }: { user: U
       </aside>
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex w-64 flex-shrink-0 bg-navy-950 border-r border-white/5 flex-col">
+      <aside className="hidden lg:flex w-[220px] flex-shrink-0 bg-[#0a0a0a] border-r border-white/[0.06] flex-col">
         <NavContent />
       </aside>
     </>

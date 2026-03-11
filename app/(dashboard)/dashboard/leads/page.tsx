@@ -7,87 +7,61 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogBody,
 } from '@/components/ui/dialog';
 import {
-  Search,
-  Filter,
-  Download,
-  Plus,
-  Pencil,
-  Trash2,
-  Loader2,
-  Users,
-  AlertCircle,
-  Sparkles,
-  CheckCircle2,
-  Upload,
+  Search, Filter, Download, Plus, Pencil, Trash2, Loader2,
+  Users, AlertCircle, Sparkles, CheckCircle2, Upload,
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from '@/components/ui/use-toast';
+import { cn } from '@/lib/utils';
 
 type Lead = {
-  id: string;
-  email: string;
-  name: string | null;
-  company: string | null;
-  phone: string | null;
-  source: string;
-  status: string;
-  score: number;
-  notes: string | null;
-  created_at: string;
-  enriched_at?: string | null;
-  email_verified?: boolean | null;
-  company_industry?: string | null;
-  company_size?: string | null;
+  id: string; email: string; name: string | null; company: string | null;
+  phone: string | null; source: string; status: string; score: number;
+  notes: string | null; created_at: string; enriched_at?: string | null;
+  email_verified?: boolean | null; company_industry?: string | null; company_size?: string | null;
 };
 
 type LeadForm = Omit<Lead, 'id' | 'created_at' | 'score'> & { score: string };
 
 const EMPTY_FORM: LeadForm = {
-  email: '',
-  name: '',
-  company: '',
-  phone: '',
-  source: 'manual',
-  status: 'new',
-  score: '50',
-  notes: '',
+  email: '', name: '', company: '', phone: '', source: 'manual',
+  status: 'new', score: '50', notes: '',
 };
 
 const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'purple' | 'secondary'> = {
-  new: 'default',
-  contacted: 'warning',
-  qualified: 'success',
-  proposal: 'purple',
-  won: 'success',
-  lost: 'destructive',
-  unsubscribed: 'secondary',
+  new: 'default', contacted: 'warning', qualified: 'success',
+  proposal: 'purple', won: 'success', lost: 'destructive', unsubscribed: 'secondary',
 };
 
 const STATUSES = ['new', 'contacted', 'qualified', 'proposal', 'won', 'lost'];
-const SOURCES = ['website', 'linkedin', 'google', 'reddit', 'medium', 'twitter', 'demo', 'referral', 'manual', 'other'];
+const SOURCES  = ['website', 'linkedin', 'google', 'reddit', 'medium', 'twitter', 'demo', 'referral', 'manual', 'other'];
+
+const selectCls = [
+  'flex h-9 w-full rounded-lg px-3 py-2 text-sm',
+  'bg-[#111111] text-[#ededed] border border-white/[0.08]',
+  'focus:outline-none focus:ring-2 focus:ring-brand-500/50',
+  'hover:border-white/[0.12] transition-colors duration-150',
+  '[&>option]:bg-[#1a1a1a]',
+].join(' ');
 
 export default function LeadsPage() {
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [leads,        setLeads]        = useState<Lead[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [search,       setSearch]       = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [modalOpen, setModalOpen] = useState(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [editLead, setEditLead] = useState<Lead | null>(null);
-  const [form, setForm] = useState<LeadForm>(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [enrichingId, setEnrichingId] = useState<string | null>(null);
-  const [bulkEnriching, setBulkEnriching] = useState(false);
+  const [modalOpen,    setModalOpen]    = useState(false);
+  const [deleteId,     setDeleteId]     = useState<string | null>(null);
+  const [editLead,     setEditLead]     = useState<Lead | null>(null);
+  const [form,         setForm]         = useState<LeadForm>(EMPTY_FORM);
+  const [saving,       setSaving]       = useState(false);
+  const [deleting,     setDeleting]     = useState(false);
+  const [page,         setPage]         = useState(1);
+  const [total,        setTotal]        = useState(0);
+  const [enrichingId,  setEnrichingId]  = useState<string | null>(null);
+  const [bulkEnriching,setBulkEnriching]= useState(false);
   const LIMIT = 20;
 
   const fetchLeads = useCallback(async () => {
@@ -95,21 +69,19 @@ export default function LeadsPage() {
     try {
       const params = new URLSearchParams({ page: String(page), limit: String(LIMIT) });
       if (statusFilter) params.set('status', statusFilter);
-      const res = await fetch(`/api/leads?${params}`);
+      const res  = await fetch(`/api/leads?${params}`);
       if (!res.ok) throw new Error('Failed to fetch');
       const data = await res.json();
       setLeads(data.leads || []);
       setTotal(data.total || 0);
     } catch {
       toast({ title: 'Error loading leads', description: 'Check your Supabase configuration.', variant: 'destructive' });
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }, [page, statusFilter]);
 
   useEffect(() => { fetchLeads(); }, [fetchLeads]);
 
-  const openAdd = () => { setEditLead(null); setForm(EMPTY_FORM); setModalOpen(true); };
+  const openAdd  = () => { setEditLead(null); setForm(EMPTY_FORM); setModalOpen(true); };
   const openEdit = (lead: Lead) => {
     setEditLead(lead);
     setForm({ email: lead.email, name: lead.name || '', company: lead.company || '', phone: lead.phone || '', source: lead.source, status: lead.status, score: String(lead.score), notes: lead.notes || '' });
@@ -117,234 +89,186 @@ export default function LeadsPage() {
   };
 
   const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
+    e.preventDefault(); setSaving(true);
     try {
       const body = { ...form, score: parseInt(form.score) || 50 };
-      let res: Response;
-      if (editLead) {
-        res = await fetch(`/api/leads/${editLead.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      } else {
-        res = await fetch('/api/leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, type: 'signup' }) });
-      }
+      const res  = editLead
+        ? await fetch(`/api/leads/${editLead.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+        : await fetch('/api/leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, type: 'signup' }) });
       if (!res.ok) throw new Error('Save failed');
-      toast({ title: editLead ? 'Lead updated' : 'Lead added', description: editLead ? `${form.name || form.email} updated.` : `${form.name || form.email} added to CRM.` });
-      setModalOpen(false);
-      fetchLeads();
-    } catch {
-      toast({ title: 'Save failed', description: 'Please try again.', variant: 'destructive' });
-    } finally {
-      setSaving(false);
-    }
+      toast({ title: editLead ? 'Lead updated' : 'Lead added', variant: 'success' });
+      setModalOpen(false); fetchLeads();
+    } catch { toast({ title: 'Save failed', description: 'Please try again.', variant: 'destructive' }); }
+    finally  { setSaving(false); }
   };
 
   const handleDelete = async () => {
-    if (!deleteId) return;
-    setDeleting(true);
+    if (!deleteId) return; setDeleting(true);
     try {
       const res = await fetch(`/api/leads/${deleteId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Delete failed');
-      toast({ title: 'Lead deleted' });
-      setDeleteId(null);
-      fetchLeads();
-    } catch {
-      toast({ title: 'Delete failed', description: 'Please try again.', variant: 'destructive' });
-    } finally {
-      setDeleting(false);
-    }
+      toast({ title: 'Lead deleted' }); setDeleteId(null); fetchLeads();
+    } catch { toast({ title: 'Delete failed', description: 'Please try again.', variant: 'destructive' }); }
+    finally  { setDeleting(false); }
   };
 
   const exportCSV = () => {
     const rows = [
-      ['Name', 'Email', 'Company', 'Phone', 'Source', 'Status', 'Score', 'Date'],
-      ...leads.map((l) => [l.name || '', l.email, l.company || '', l.phone || '', l.source, l.status, String(l.score), l.created_at.split('T')[0]]),
+      ['Name','Email','Company','Phone','Source','Status','Score','Date'],
+      ...leads.map((l) => [l.name||'', l.email, l.company||'', l.phone||'', l.source, l.status, String(l.score), l.created_at.split('T')[0]]),
     ];
-    const csv = rows.map((r) => r.map((v) => `"${v}"`).join(',')).join('\n');
+    const csv  = rows.map((r) => r.map((v) => `"${v}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'aryanka-leads.csv';
-    a.click();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a'); a.href = url; a.download = 'aryanka-leads.csv'; a.click();
     URL.revokeObjectURL(url);
   };
 
   const handleEnrich = async (lead: Lead) => {
     setEnrichingId(lead.id);
     try {
-      const res = await fetch('/api/leads/enrich', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lead_id: lead.id }),
-      });
-      if (res.ok) {
-        toast({ title: 'Lead enriched!', description: `${lead.name || lead.email} data updated.` });
-        fetchLeads();
-      } else {
-        toast({ title: 'Enrichment failed', variant: 'destructive' });
-      }
-    } catch {
-      toast({ title: 'Network error', variant: 'destructive' });
-    } finally {
-      setEnrichingId(null);
-    }
+      const res = await fetch('/api/leads/enrich', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lead_id: lead.id }) });
+      if (res.ok) { toast({ title: 'Lead enriched!', variant: 'success' }); fetchLeads(); }
+      else         toast({ title: 'Enrichment failed', variant: 'destructive' });
+    } catch { toast({ title: 'Network error', variant: 'destructive' }); }
+    finally  { setEnrichingId(null); }
   };
 
   const handleBulkEnrich = async () => {
     setBulkEnriching(true);
     try {
-      const res = await fetch('/api/leads/enrich', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bulk: true }),
-      });
-      if (res.ok) {
-        const d = await res.json();
-        toast({ title: `Enriched ${d.enriched} leads!`, description: d.failed ? `${d.failed} failed.` : undefined });
-        fetchLeads();
-      } else {
-        toast({ title: 'Bulk enrichment failed', variant: 'destructive' });
-      }
-    } catch {
-      toast({ title: 'Network error', variant: 'destructive' });
-    } finally {
-      setBulkEnriching(false);
-    }
+      const res = await fetch('/api/leads/enrich', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bulk: true }) });
+      if (res.ok) { const d = await res.json(); toast({ title: `Enriched ${d.enriched} leads!`, variant: 'success' }); fetchLeads(); }
+      else         toast({ title: 'Bulk enrichment failed', variant: 'destructive' });
+    } catch { toast({ title: 'Network error', variant: 'destructive' }); }
+    finally  { setBulkEnriching(false); }
   };
 
   const filtered = leads.filter((l) => {
     if (!search) return true;
     const q = search.toLowerCase();
-    return (l.name || '').toLowerCase().includes(q) || l.email.toLowerCase().includes(q) || (l.company || '').toLowerCase().includes(q);
+    return (l.name||'').toLowerCase().includes(q) || l.email.toLowerCase().includes(q) || (l.company||'').toLowerCase().includes(q);
   });
 
   return (
-    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-5 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-5">
+
+      {/* ── Header ─────────────────────────────────────────── */}
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Leads & CRM</h1>
-          <p className="text-navy-400 mt-1 text-sm">{total.toLocaleString()} total leads in pipeline</p>
+          <h1 className="text-lg font-semibold text-[#ededed] tracking-tight">Leads & CRM</h1>
+          <p className="text-xs text-[#555] mt-0.5">{total.toLocaleString()} leads in pipeline</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={exportCSV} disabled={leads.length === 0}>
-            <Download className="w-4 h-4" />
-            Export
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          <Button variant="ghost" size="sm" onClick={exportCSV} disabled={leads.length === 0}>
+            <Download className="w-3.5 h-3.5" /> Export
           </Button>
           <Link href="/dashboard/leads/import">
-            <Button variant="outline" size="sm">
-              <Upload className="w-4 h-4" />
-              Import
-            </Button>
+            <Button variant="ghost" size="sm"><Upload className="w-3.5 h-3.5" /> Import</Button>
           </Link>
-          <Button variant="outline" size="sm" onClick={handleBulkEnrich} disabled={bulkEnriching}>
-            {bulkEnriching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-brand-400" />}
+          <Button variant="secondary" size="sm" onClick={handleBulkEnrich} disabled={bulkEnriching}>
+            {bulkEnriching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-brand-400" />}
             Bulk Enrich
           </Button>
-          <Button variant="gradient" size="sm" onClick={openAdd}>
-            <Plus className="w-4 h-4" />
-            Add Lead
-          </Button>
+          <Button size="sm" onClick={openAdd}><Plus className="w-3.5 h-3.5" /> Add Lead</Button>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3 mb-6">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-navy-500" />
+      {/* ── Filters ────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-[200px] max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#444]" />
           <input
-            type="text"
-            placeholder="Search leads..."
-            value={search}
+            type="text" placeholder="Search leads…" value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-10 pl-9 pr-4 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder:text-navy-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="w-full h-9 pl-9 pr-4 bg-[#111] border border-white/[0.08] rounded-lg text-sm text-[#ededed] placeholder:text-[#444] focus:outline-none focus:ring-2 focus:ring-brand-500/50 hover:border-white/[0.12] transition-colors"
           />
         </div>
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-navy-500" />
-          <select
-            value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-            className="h-10 bg-white/5 border border-white/10 rounded-xl text-sm text-white px-3 focus:outline-none focus:ring-2 focus:ring-brand-500"
-          >
-            <option value="" className="bg-navy-800">All statuses</option>
-            {STATUSES.map((s) => (
-              <option key={s} value={s} className="bg-navy-800 capitalize">{s}</option>
-            ))}
+          <Filter className="w-3.5 h-3.5 text-[#444]" />
+          <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} className={selectCls} style={{ width: 'auto' }}>
+            <option value="">All statuses</option>
+            {STATUSES.map((s) => <option key={s} value={s} className="capitalize">{s}</option>)}
           </select>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-glass rounded-xl overflow-hidden">
+      {/* ── Table card ─────────────────────────────────────── */}
+      <div className="rounded-xl border border-white/[0.07] bg-[#111] overflow-hidden">
         {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-6 h-6 text-brand-400 animate-spin" />
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-5 h-5 text-brand-400 animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16">
-            <Users className="w-8 h-8 text-navy-600 mb-3" />
-            <p className="text-sm text-navy-500">
-              {search ? 'No leads match your search.' : 'No leads yet. Add your first lead or connect Supabase.'}
+          <div className="flex flex-col items-center justify-center py-20 text-center px-6">
+            <div className="w-12 h-12 rounded-xl bg-[#1a1a1a] border border-white/[0.06] flex items-center justify-center mb-4">
+              <Users className="w-5 h-5 text-[#444]" />
+            </div>
+            <p className="text-sm font-medium text-[#555] mb-1">
+              {search ? 'No leads match your search' : 'No leads yet'}
+            </p>
+            <p className="text-xs text-[#444] mb-4">
+              {search ? 'Try a different search term' : 'Add your first lead or connect Supabase to import data.'}
             </p>
             {!search && (
-              <Button variant="outline" size="sm" className="mt-4" onClick={openAdd}>
-                <Plus className="w-4 h-4" /> Add Lead
-              </Button>
+              <Button size="sm" onClick={openAdd}><Plus className="w-3.5 h-3.5" /> Add Lead</Button>
             )}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-white/5">
+                <tr className="border-b border-white/[0.05]">
                   {['Lead', 'Company', 'Source', 'Score', 'Status', 'Date', ''].map((h) => (
-                    <th key={h} className="px-5 py-3.5 text-left text-xs font-medium text-navy-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                    <th key={h} className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-[#444] whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
-                {filtered.map((lead) => (
-                  <tr key={lead.id} className="hover:bg-white/3 transition-colors group">
-                    <td className="px-5 py-4">
-                      <div className="font-medium text-white text-sm">{lead.name || 'Anonymous'}</div>
-                      <div className="text-xs text-navy-500">{lead.email}</div>
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="text-sm text-navy-300">{lead.company || '—'}</div>
-                      {lead.phone && <div className="text-xs text-navy-500">{lead.phone}</div>}
-                    </td>
-                    <td className="px-5 py-4 text-sm text-navy-300 capitalize">{lead.source}</td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-12 h-1.5 bg-navy-700 rounded-full">
-                          <div className="h-1.5 rounded-full bg-gradient-to-r from-brand-500 to-accent-500" style={{ width: `${lead.score}%` }} />
+              <tbody>
+                {filtered.map((lead, i) => (
+                  <tr key={lead.id} className={cn('group hover:bg-white/[0.025] transition-colors', i !== filtered.length - 1 && 'border-b border-white/[0.04]')}>
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-[#1a1a1a] border border-white/[0.06] flex items-center justify-center text-[11px] font-semibold text-[#666] flex-shrink-0">
+                          {((lead.name)?.[0] || lead.email?.[0] || 'A').toUpperCase()}
                         </div>
-                        <span className="text-xs font-bold text-white">{lead.score}</span>
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-[#ededed] truncate">{lead.name || 'Anonymous'}</div>
+                          <div className="text-xs text-[#555] truncate">{lead.email}</div>
+                        </div>
                       </div>
                     </td>
-                    <td className="px-5 py-4">
-                      <Badge variant={STATUS_VARIANTS[lead.status] || 'secondary'} className="capitalize">
-                        {lead.status}
-                      </Badge>
+                    <td className="px-5 py-3.5">
+                      <div className="text-sm text-[#777]">{lead.company || <span className="text-[#444]">—</span>}</div>
+                      {lead.phone && <div className="text-xs text-[#555]">{lead.phone}</div>}
                     </td>
-                    <td className="px-5 py-4 text-xs text-navy-500 whitespace-nowrap">
+                    <td className="px-5 py-3.5">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs bg-white/[0.04] text-[#666] border border-white/[0.06] capitalize">{lead.source}</span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-16 h-1 bg-[#222] rounded-full overflow-hidden">
+                          <div className="h-1 rounded-full bg-gradient-to-r from-brand-500 to-accent-500" style={{ width: `${Math.max(2, lead.score)}%` }} />
+                        </div>
+                        <span className="text-xs font-medium text-[#777] tabular-nums w-5">{lead.score}</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <Badge variant={STATUS_VARIANTS[lead.status] || 'secondary'} className="capitalize">{lead.status}</Badge>
+                    </td>
+                    <td className="px-5 py-3.5 text-xs text-[#555] whitespace-nowrap">
                       {new Date(lead.created_at).toLocaleDateString('en-IN')}
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-3.5">
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => handleEnrich(lead)}
-                          disabled={enrichingId === lead.id}
-                          className="p-1.5 rounded-lg hover:bg-brand-500/10 text-navy-400 hover:text-brand-400 transition-colors"
-                          title={lead.enriched_at ? 'Re-enrich' : 'Enrich lead data'}
-                        >
-                          {enrichingId === lead.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : lead.enriched_at ? <CheckCircle2 className="w-3.5 h-3.5 text-green-400" /> : <Sparkles className="w-3.5 h-3.5" />}
+                        <button onClick={() => handleEnrich(lead)} disabled={enrichingId === lead.id}
+                          className="p-1.5 rounded-lg hover:bg-brand-500/[0.1] text-[#444] hover:text-brand-400 transition-colors" title="Enrich">
+                          {enrichingId === lead.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : lead.enriched_at ? <CheckCircle2 className="w-3.5 h-3.5 text-accent-400" /> : <Sparkles className="w-3.5 h-3.5" />}
                         </button>
-                        <button onClick={() => openEdit(lead)} className="p-1.5 rounded-lg hover:bg-white/10 text-navy-400 hover:text-white transition-colors" title="Edit">
+                        <button onClick={() => openEdit(lead)} className="p-1.5 rounded-lg hover:bg-white/[0.06] text-[#444] hover:text-[#ededed] transition-colors" title="Edit">
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
-                        <button onClick={() => setDeleteId(lead.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-navy-400 hover:text-red-400 transition-colors" title="Delete">
+                        <button onClick={() => setDeleteId(lead.id)} className="p-1.5 rounded-lg hover:bg-red-500/[0.1] text-[#444] hover:text-red-400 transition-colors" title="Delete">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -358,69 +282,71 @@ export default function LeadsPage() {
 
         {/* Pagination */}
         {total > LIMIT && (
-          <div className="flex items-center justify-between px-5 py-3 border-t border-white/5">
-            <span className="text-xs text-navy-500">Page {page} of {Math.ceil(total / LIMIT)}</span>
+          <div className="flex items-center justify-between px-5 py-3 border-t border-white/[0.05]">
+            <span className="text-xs text-[#555]">Page {page} of {Math.ceil(total / LIMIT)}</span>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>Previous</Button>
-              <Button variant="outline" size="sm" disabled={page >= Math.ceil(total / LIMIT)} onClick={() => setPage(p => p + 1)}>Next</Button>
+              <Button variant="secondary" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
+              <Button variant="secondary" size="sm" disabled={page >= Math.ceil(total / LIMIT)} onClick={() => setPage((p) => p + 1)}>Next</Button>
             </div>
           </div>
         )}
       </div>
 
-      {/* Add/Edit Modal */}
+      {/* ── Add / Edit modal ───────────────────────────────── */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editLead ? 'Edit Lead' : 'Add New Lead'}</DialogTitle>
+            <DialogTitle>{editLead ? 'Edit Lead' : 'Add Lead'}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSave} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="lead-name">Full Name</Label>
-                <Input id="lead-name" value={form.name || ''} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Rahul Mehta" className="mt-1" />
+          <form onSubmit={handleSave}>
+            <DialogBody className="space-y-4 max-h-[60vh] overflow-y-auto">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="lead-name">Full Name</Label>
+                  <Input id="lead-name" value={form.name || ''} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Rahul Mehta" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="lead-email">Email *</Label>
+                  <Input id="lead-email" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} placeholder="rahul@company.com" required />
+                </div>
               </div>
-              <div>
-                <Label htmlFor="lead-email">Email *</Label>
-                <Input id="lead-email" type="email" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} placeholder="rahul@company.com" required className="mt-1" />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="lead-company">Company</Label>
+                  <Input id="lead-company" value={form.company || ''} onChange={(e) => setForm((f) => ({ ...f, company: e.target.value }))} placeholder="Acme Inc." />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="lead-phone">Phone</Label>
+                  <Input id="lead-phone" value={form.phone || ''} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} placeholder="+91 98765 43210" />
+                </div>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="lead-company">Company</Label>
-                <Input id="lead-company" value={form.company || ''} onChange={(e) => setForm(f => ({ ...f, company: e.target.value }))} placeholder="Acme Inc." className="mt-1" />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="lead-source">Source</Label>
+                  <select id="lead-source" value={form.source} onChange={(e) => setForm((f) => ({ ...f, source: e.target.value }))} className={selectCls}>
+                    {SOURCES.map((s) => <option key={s} value={s} className="capitalize">{s}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="lead-status">Status</Label>
+                  <select id="lead-status" value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))} className={selectCls}>
+                    {STATUSES.map((s) => <option key={s} value={s} className="capitalize">{s}</option>)}
+                  </select>
+                </div>
               </div>
-              <div>
-                <Label htmlFor="lead-phone">Phone</Label>
-                <Input id="lead-phone" value={form.phone || ''} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+91 98765 43210" className="mt-1" />
+              <div className="space-y-2">
+                <Label htmlFor="lead-score">Lead Score — <span className="text-[#ededed] font-semibold">{form.score}</span></Label>
+                <input id="lead-score" type="range" min="0" max="100" value={form.score} onChange={(e) => setForm((f) => ({ ...f, score: e.target.value }))} className="w-full accent-brand-500 cursor-pointer" />
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="lead-source">Source</Label>
-                <select id="lead-source" value={form.source} onChange={(e) => setForm(f => ({ ...f, source: e.target.value }))} className="mt-1 flex h-11 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
-                  {SOURCES.map((s) => <option key={s} value={s} className="bg-navy-800 capitalize">{s}</option>)}
-                </select>
+              <div className="space-y-1.5">
+                <Label htmlFor="lead-notes">Notes</Label>
+                <Textarea id="lead-notes" value={form.notes || ''} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Add notes about this lead…" rows={3} />
               </div>
-              <div>
-                <Label htmlFor="lead-status">Status</Label>
-                <select id="lead-status" value={form.status} onChange={(e) => setForm(f => ({ ...f, status: e.target.value }))} className="mt-1 flex h-11 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
-                  {STATUSES.map((s) => <option key={s} value={s} className="bg-navy-800 capitalize">{s}</option>)}
-                </select>
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="lead-score">Lead Score (0–100): {form.score}</Label>
-              <input id="lead-score" type="range" min="0" max="100" value={form.score} onChange={(e) => setForm(f => ({ ...f, score: e.target.value }))} className="mt-2 w-full accent-brand-500" />
-            </div>
-            <div>
-              <Label htmlFor="lead-notes">Notes</Label>
-              <Textarea id="lead-notes" value={form.notes || ''} onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Add any notes about this lead..." className="mt-1" rows={3} />
-            </div>
+            </DialogBody>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setModalOpen(false)} disabled={saving}>Cancel</Button>
-              <Button type="submit" variant="gradient" disabled={saving}>
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+              <Button type="button" variant="ghost" onClick={() => setModalOpen(false)} disabled={saving}>Cancel</Button>
+              <Button type="submit" disabled={saving}>
+                {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 {editLead ? 'Save Changes' : 'Add Lead'}
               </Button>
             </DialogFooter>
@@ -428,20 +354,20 @@ export default function LeadsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirm Modal */}
+      {/* ── Delete confirm ─────────────────────────────────── */}
       <Dialog open={!!deleteId} onOpenChange={(o) => { if (!o) setDeleteId(null); }}>
         <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Delete Lead?</DialogTitle>
-          </DialogHeader>
-          <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
-            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-            <p className="text-sm text-navy-300">This action cannot be undone. The lead will be permanently removed.</p>
-          </div>
+          <DialogHeader><DialogTitle>Delete Lead?</DialogTitle></DialogHeader>
+          <DialogBody>
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-red-500/[0.06] border border-red-500/[0.15]">
+              <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-[#a1a1a1]">This action cannot be undone. The lead will be permanently removed from your database.</p>
+            </div>
+          </DialogBody>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteId(null)} disabled={deleting}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setDeleteId(null)} disabled={deleting}>Cancel</Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
+              {deleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               Delete Lead
             </Button>
           </DialogFooter>
